@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libgtest.so -o libgtest.so CMakeFiles/gtest.dir/src/gtest-all.cc.o  -L/home/dijkd/franka_ws/build/franka_control/gtest/gtest/src -pthread -Wl,-rpath,/home/dijkd/franka_ws/build/franka_control/gtest/gtest/src 

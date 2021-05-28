@@ -1,0 +1,103 @@
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In member function ‘[01m[Kvirtual void new_controllers::FirstController::update(const ros::Time&, const ros::Duration&)[m[K’:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:88:7:[m[K [01;31m[Kerror: [m[K‘[01m[Kvel_current_[m[K’ was not declared in this scope
+   if (vel_current_ < vel_max_) {
+[01;32m[K       ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:89:59:[m[K [01;31m[Kerror: [m[K‘[01m[Kacceleration_time_[m[K’ was not declared in this scope
+     vel_current_ += period.toSec() * std::fabs(vel_max_ / acceleration_time_);
+[01;32m[K                                                           ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:91:3:[m[K [01;31m[Kerror: [m[K‘[01m[Kvel_current_[m[K’ was not declared in this scope
+   vel_current_ = std::fmin(vel_current_, vel_max_);
+[01;32m[K   ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:93:3:[m[K [01;31m[Kerror: [m[K‘[01m[Kangle_[m[K’ was not declared in this scope
+   angle_ += period.toSec() * vel_current_ / std::fabs(radius_);
+[01;32m[K   ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:93:55:[m[K [01;31m[Kerror: [m[K‘[01m[Kradius_[m[K’ was not declared in this scope
+   angle_ += period.toSec() * vel_current_ / std::fabs(radius_);
+[01;32m[K                                                       ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:98:41:[m[K [01;31m[Kerror: [m[K‘[01m[Kinitial_pose_[m[K’ was not declared in this scope
+   std::array<double, 16> pose_desired = initial_pose_;
+[01;32m[K                                         ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:99:23:[m[K [01;31m[Kerror: [m[K‘[01m[Kdelta_y[m[K’ was not declared in this scope
+   pose_desired[13] += delta_y;
+[01;32m[K                       ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:100:23:[m[K [01;31m[Kerror: [m[K‘[01m[Kdelta_z[m[K’ was not declared in this scope
+   pose_desired[14] += delta_z;
+[01;32m[K                       ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:101:3:[m[K [01;31m[Kerror: [m[K‘[01m[Kcartesian_pose_handle_[m[K’ was not declared in this scope
+   cartesian_pose_handle_->setCommand(pose_desired);
+[01;32m[K   ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:109:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kdq_filtered_[m[K’ was not declared in this scope
+     dq_filtered_[i] = (1 - alpha) * dq_filtered_[i] + alpha * robot_state.dq[i];
+[01;32m[K     ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:115:27:[m[K [01;31m[Kerror: [m[K‘[01m[Kk_gains_[m[K’ was not declared in this scope
+                           k_gains_[i] * (robot_state.q_d[i] - robot_state.q[i]) +
+[01;32m[K                           ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:116:27:[m[K [01;31m[Kerror: [m[K‘[01m[Kd_gains_[m[K’ was not declared in this scope
+                           d_gains_[i] * (robot_state.dq_d[i] - dq_filtered_[i]);
+[01;32m[K                           ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:116:64:[m[K [01;31m[Kerror: [m[K‘[01m[Kdq_filtered_[m[K’ was not declared in this scope
+                           d_gains_[i] * (robot_state.dq_d[i] - dq_filtered_[i]);
+[01;32m[K                                                                ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:121:99:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[Knew_controllers::FirstController::saturateTorqueRate(std::array<double, 7ul>&, std::array<double, 7ul>&)[m[K’
+   std::array<double, 7> tau_d_saturated = saturateTorqueRate(tau_d_calculated, robot_state.tau_J_d);
+[01;32m[K                                                                                                   ^[m[K
+In file included from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:1:0[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/include/new_controllers/first_controller.h:37:31:[m[K [01;36m[Knote: [m[Kcandidate: Eigen::Matrix<double, 7, 1> new_controllers::FirstController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1>&, const Eigen::Matrix<double, 7, 1>&)
+   Eigen::Matrix<double, 7, 1> saturateTorqueRate(
+[01;32m[K                               ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/include/new_controllers/first_controller.h:37:31:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kstd::array<double, 7ul>[m[K’ to ‘[01m[Kconst Eigen::Matrix<double, 7, 1>&[m[K’
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:127:26:[m[K [01;31m[Kerror: [m[K‘[01m[Ktorques_publisher_[m[K’ was not declared in this scope
+   if (rate_trigger_() && torques_publisher_.trylock()) {
+[01;32m[K                          ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:132:22:[m[K [01;31m[Kerror: [m[K‘[01m[Klast_tau_d_[m[K’ was not declared in this scope
+       tau_error[i] = last_tau_d_[i] - tau_j[i];
+[01;32m[K                      ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:137:50:[m[K [01;31m[Kerror: [m[K‘[01m[Klast_tau_d_[m[K’ was not declared in this scope
+       torques_publisher_.msg_.tau_commanded[i] = last_tau_d_[i];
+[01;32m[K                                                  ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:145:5:[m[K [01;31m[Kerror: [m[K‘[01m[Klast_tau_d_[m[K’ was not declared in this scope
+     last_tau_d_[i] = tau_d_saturated[i] + gravity[i];
+[01;32m[K     ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K At global scope:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:149:23:[m[K [01;31m[Kerror: [m[Kprototype for ‘[01m[Kstd::array<double, 7ul> new_controllers::FirstController::saturateTorqueRate(const std::array<double, 7ul>&, const std::array<double, 7ul>&)[m[K’ does not match any in class ‘[01m[Knew_controllers::FirstController[m[K’
+ std::array<double, 7> FirstController::saturateTorqueRate(
+[01;32m[K                       ^[m[K
+In file included from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:1:0[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/include/new_controllers/first_controller.h:37:31:[m[K [01;31m[Kerror: [m[Kcandidate is: Eigen::Matrix<double, 7, 1> new_controllers::FirstController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1>&, const Eigen::Matrix<double, 7, 1>&)
+   Eigen::Matrix<double, 7, 1> saturateTorqueRate(
+[01;32m[K                               ^[m[K
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:45:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:162:24:[m[K [01;31m[Kerror: [m[K‘[01m[Kfranka_example_controllers[m[K’ does not name a type
+ PLUGINLIB_EXPORT_CLASS(franka_example_controllers::JointImpedanceExampleController,
+[01;32m[K                        ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In constructor ‘[01m[K{anonymous}::ProxyExec0::ProxyExec0()[m[K’:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:162:1:[m[K [01;31m[Kerror: [m[K‘[01m[K_derived[m[K’ was not declared in this scope
+ PLUGINLIB_EXPORT_CLASS(franka_example_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:162:1:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[KregisterPlugin(const char [60], const char [37])[m[K’
+ PLUGINLIB_EXPORT_CLASS(franka_example_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:43:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/opt/ros/kinetic/include/class_loader/class_loader_core.hpp:162:6:[m[K [01;36m[Knote: [m[Kcandidate: template<class Derived, class Base> void class_loader::class_loader_private::registerPlugin(const string&, const string&)
+ void registerPlugin(const std::string & class_name, const std::string & base_class_name)
+[01;32m[K      ^[m[K
+[01m[K/opt/ros/kinetic/include/class_loader/class_loader_core.hpp:162:6:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:45:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:162:1:[m[K [01;31m[Kerror: [m[Ktemplate argument 1 is invalid
+ PLUGINLIB_EXPORT_CLASS(franka_example_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+make[2]: *** [CMakeFiles/new_controllers.dir/src/first_controller.cpp.o] Error 1
+make[1]: *** [CMakeFiles/new_controllers.dir/all] Error 2
+make: *** [all] Error 2

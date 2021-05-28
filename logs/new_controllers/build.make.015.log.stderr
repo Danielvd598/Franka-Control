@@ -1,0 +1,6 @@
+In file included from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:1:0[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/include/new_controllers/first_controller.h:18:62:[m[K [01;31m[Kfatal error: [m[Kfranka_example_controllers/JointTorqueComparison.h: No such file or directory
+compilation terminated.
+make[2]: *** [CMakeFiles/new_controllers.dir/src/first_controller.cpp.o] Error 1
+make[1]: *** [CMakeFiles/new_controllers.dir/all] Error 2
+make: *** [all] Error 2

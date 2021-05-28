@@ -1,0 +1,6 @@
+devel_space: /home/dijkd/franka_ws/devel
+install: false
+install_space: /home/dijkd/franka_ws/install
+profile: default
+source_space: /home/dijkd/franka_ws/src
+workspace: /home/dijkd/franka_ws

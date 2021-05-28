@@ -1,0 +1,47 @@
+In file included from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:1:0[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/include/new_controllers/first_controller.h:34:1:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ after class definition
+ }  
+[01;32m[K ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In member function ‘[01m[Kvirtual void new_controllers::FirstController::update(const ros::Time&, const ros::Duration&)[m[K’:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:30:3:[m[K [01;31m[Kerror: [m[K‘[01m[Ktau_d_saturated[m[K’ was not declared in this scope
+   tau_d_saturated = 0;
+[01;32m[K   ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:31:10:[m[K [01;31m[Kerror: [m[Kreturn-statement with a value, in function returning 'void' [-fpermissive]
+   return tau_d_saturated;
+[01;32m[K          ^[m[K
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:45:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K At global scope:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:36:41:[m[K [01;31m[Kerror: [m[K‘[01m[KJointImpedanceExampleController[m[K’ in namespace ‘[01m[Knew_controllers[m[K’ does not name a type
+ PLUGINLIB_EXPORT_CLASS(new_controllers::JointImpedanceExampleController,
+[01;32m[K                                         ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In constructor ‘[01m[K{anonymous}::ProxyExec0::ProxyExec0()[m[K’:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:36:1:[m[K [01;31m[Kerror: [m[K‘[01m[K_derived[m[K’ was not declared in this scope
+ PLUGINLIB_EXPORT_CLASS(new_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:36:1:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[KregisterPlugin(const char [49], const char [37])[m[K’
+ PLUGINLIB_EXPORT_CLASS(new_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:43:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/opt/ros/kinetic/include/class_loader/class_loader_core.hpp:162:6:[m[K [01;36m[Knote: [m[Kcandidate: template<class Derived, class Base> void class_loader::class_loader_private::registerPlugin(const string&, const string&)
+ void registerPlugin(const std::string & class_name, const std::string & base_class_name)
+[01;32m[K      ^[m[K
+[01m[K/opt/ros/kinetic/include/class_loader/class_loader_core.hpp:162:6:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+In file included from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.hpp:45:0[m[K,
+                 from [01m[K/opt/ros/kinetic/include/class_loader/class_loader.h:35[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.hpp:40[m[K,
+                 from [01m[K/opt/ros/kinetic/include/pluginlib/class_list_macros.h:35[m[K,
+                 from [01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:6[m[K:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:36:1:[m[K [01;31m[Kerror: [m[Ktemplate argument 1 is invalid
+ PLUGINLIB_EXPORT_CLASS(new_controllers::JointImpedanceExampleController,
+[01;32m[K ^[m[K
+make[2]: *** [CMakeFiles/new_controllers.dir/src/first_controller.cpp.o] Error 1
+make[1]: *** [CMakeFiles/new_controllers.dir/all] Error 2
+make: *** [all] Error 2

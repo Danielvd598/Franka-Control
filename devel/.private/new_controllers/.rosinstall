@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/dijkd/franka_ws/devel/.private/new_controllers/setup.sh

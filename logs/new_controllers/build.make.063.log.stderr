@@ -1,0 +1,7 @@
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In member function ‘[01m[Kvirtual void new_controllers::FirstController::update(const ros::Time&, const ros::Duration&)[m[K’:
+[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:100:27:[m[K [01;31m[Kerror: [m[Kcannot convert ‘[01m[K<brace-enclosed initializer list>[m[K’ to ‘[01m[KEigen::DenseCoeffsBase<Eigen::Matrix<double, -1, 1>, 1>::Scalar {aka double}[m[K’ in assignment
+   desired_force_torque(2) = {0,0,0,0,0,0};
+[01;32m[K                           ^[m[K
+make[2]: *** [CMakeFiles/new_controllers.dir/src/first_controller.cpp.o] Error 1
+make[1]: *** [CMakeFiles/new_controllers.dir/all] Error 2
+make: *** [all] Error 2
