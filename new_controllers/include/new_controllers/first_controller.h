@@ -52,18 +52,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 3, 3> Kt;
   Eigen::Matrix<double, 3, 3> Go;
   Eigen::Matrix<double, 3, 3> Gt;
-  Eigen::Matrix<double, 3, 3> Hv0;
-
-
-  /*Eigen::MatrixXd I33; 
-  Eigen::MatrixXd Ko;
-  Eigen::MatrixXd Kt;
-  Eigen::MatrixXd Go;
-  Eigen::MatrixXd Gt;
-  Eigen::MatrixXd Hv0;
-*/
+  Eigen::Matrix<double, 4, 4> Hv0;
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
-
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
 };
 }

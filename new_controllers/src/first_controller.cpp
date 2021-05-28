@@ -81,12 +81,6 @@ void FirstController::starting(const ros::Time& /*time*/) {
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
 
-/*  Eigen::MatrixXd I33(3,3); 
-  Eigen::MatrixXd Ko(3,3);
-  Eigen::MatrixXd Kt(3,3);
-  Eigen::MatrixXd Go(3,3);
-  Eigen::MatrixXd Gt(3,3);
-  Eigen::MatrixXd Hv0(4,4);*/
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
@@ -106,7 +100,6 @@ void FirstController::starting(const ros::Time& /*time*/) {
          0, 1, 0, 0.4,
          0, 0, 1, 0.4,
          0, 0, 0, 1;
-
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -126,19 +119,28 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
   desired_force_torque.setZero();
 
-  Eigen::VectorXd pn0(3), pnv(3);
-  Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3);
+  Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3);
+  Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
+   mn_skew(3,3), fn_skew(3,3);
 
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
          Hn0(2,0), Hn0(2,1), Hn0(2,2);
   H0n = Hn0.inverse();
+  Hnv = Hv0.inverse()*Hn0;
+  Rnv << Hnv(0,0), Hnv(0,1), Hnv(0,2),
+         Hnv(1,0), Hnv(1,1), Hnv(1,2),
+         Hnv(2,0), Hnv(2,1), Hnv(2,2);
+  pnv << Hnv(0,3), Hnv(1,3), Hnv(2,3);
+  Rvn = Rnv.inverse();
+  pnv_skew << 0, -pnv(2), pnv(1),
+            pnv(2), 0, -pnv(0),
+            -pnv(1), pnv(0), 0;
+  
+  mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
+  fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
 
-  std::cout << Kt << std::endl;
-
- // Hnv = Hv0.inverse()*Hn0;
- // std::cout << Hnv << std::endl;
 
 
   desired_force_torque(2) = 0;
@@ -176,6 +178,13 @@ Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
   }
    return trace;
  }
+ // function to find anti symmetric part of a square matrix
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> FirstController::As(const 
+Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>& matrix){
+    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> Asmatrix;
+    Asmatrix = 0.5 * (matrix - matrix.transpose());
+   return Asmatrix;
+}
 
 
 }  // namespace franka_example_controllers
