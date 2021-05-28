@@ -47,8 +47,23 @@ class FirstController : public controller_interface::MultiInterfaceController<
 //impedance parameters
   double k;
   double b;
+  Eigen::Matrix<double, 3, 3> I33;
+  Eigen::Matrix<double, 3, 3> Ko;
+  Eigen::Matrix<double, 3, 3> Kt;
+  Eigen::Matrix<double, 3, 3> Go;
+  Eigen::Matrix<double, 3, 3> Gt;
+  Eigen::Matrix<double, 3, 3> Hv0;
 
-  double trace(Eigen::MatrixXd& matrix);
+
+  /*Eigen::MatrixXd I33; 
+  Eigen::MatrixXd Ko;
+  Eigen::MatrixXd Kt;
+  Eigen::MatrixXd Go;
+  Eigen::MatrixXd Gt;
+  Eigen::MatrixXd Hv0;
+*/
+
+  double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
 
 };
 }

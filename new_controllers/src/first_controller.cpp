@@ -69,19 +69,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
-  Eigen::MatrixXd Ko(3,3);
-  Eigen::MatrixXd Kt(3,3);
-  Eigen::MatrixXd Go(3,3);
-  Eigen::MatrixXd Gt(3,3);
-  Ko << k, 0, 0,
-       0, k, 0,
-       0, 0, k;
-  Kt << k, 0, 0,
-       0, k, 0,
-       0, 0, k;
-  double a = trace(Ko);
-      std::cout << a << std::endl;
-
   return true;
 }
 
@@ -93,6 +80,33 @@ void FirstController::starting(const ros::Time& /*time*/) {
   // Bias correction for the current external torque
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
+
+/*  Eigen::MatrixXd I33(3,3); 
+  Eigen::MatrixXd Ko(3,3);
+  Eigen::MatrixXd Kt(3,3);
+  Eigen::MatrixXd Go(3,3);
+  Eigen::MatrixXd Gt(3,3);
+  Eigen::MatrixXd Hv0(4,4);*/
+  I33 << 1, 0, 0,
+         0, 1, 0,
+         0, 0, 1;
+
+  I33 << 1, 0, 0,
+         0, 1, 0,
+         0, 0, 1;
+  Ko << k, 0, 0,
+       0, k, 0,
+       0, 0, k;
+  Kt << k, 0, 0,
+       0, k, 0,
+       0, 0, k;
+  Go = 0.5*trace(Ko)*I33 - Ko;
+  Gt = 0.5*trace(Kt)*I33 - Kt;
+  Hv0 << 1, 0, 0, 0.4,
+         0, 1, 0, 0.4,
+         0, 0, 1, 0.4,
+         0, 0, 0, 1;
+
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -105,11 +119,27 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 6, 7> > jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_measured(robot_state.tau_J.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_J_d(  // NOLINT (readability-identifier-naming)
-      robot_state.tau_J_d.data());
+      robot_state.tau_J_d.data()); 
+  Eigen::Map<Eigen::Matrix<double, 4, 4> > Hn0(robot_state.O_T_EE.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
 
   Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
   desired_force_torque.setZero();
+
+  Eigen::VectorXd pn0(3), pnv(3);
+  Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3);
+
+  pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
+  Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
+         Hn0(1,0), Hn0(1,1), Hn0(1,2),
+         Hn0(2,0), Hn0(2,1), Hn0(2,2);
+  H0n = Hn0.inverse();
+
+  std::cout << Kt << std::endl;
+
+ // Hnv = Hv0.inverse()*Hn0;
+ // std::cout << Hnv << std::endl;
+
 
   desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;
@@ -135,9 +165,8 @@ Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
 }
 
 // function to find the trace of a matrix
- double FirstController::trace(Eigen::MatrixXd& matrix){
-   double trace = 0;
-
+ double FirstController::trace(const Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>& matrix){
+  double trace = 0;
   for(int i=0;i<matrix.rows();i++){
     for(int j=0;j<matrix.rows();j++){
       if(i==j){
@@ -145,8 +174,6 @@ Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
       }
     }
   }
-
-
    return trace;
  }
 
