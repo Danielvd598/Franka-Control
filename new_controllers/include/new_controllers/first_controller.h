@@ -55,6 +55,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 4, 4> Hv0;
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
+  Eigen::Matrix<double, 6, 6> Adjoint(const Eigen::Matrix<double, 4, 4>& Hmat);
+
 };
 }

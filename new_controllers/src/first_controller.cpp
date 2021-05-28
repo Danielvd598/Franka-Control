@@ -119,7 +119,7 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
   desired_force_torque.setZero();
 
-  Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3);
+  Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
   Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
    mn_skew(3,3), fn_skew(3,3);
 
@@ -140,8 +140,11 @@ void FirstController::update(const ros::Time& /*time*/,
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
   fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
-
-
+  mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
+  fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
+  Wn << mn, fn;
+  W0 = Adjoint(H0n) * Wn;
+  std::cout << W0 << std::endl;
 
   desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;
@@ -186,6 +189,31 @@ Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic>& matrix){
    return Asmatrix;
 }
 
+//function to find the adjoint of a homogeneous matrix
+Eigen::Matrix<double, 6, 6> FirstController::Adjoint(const 
+Eigen::Matrix<double, 4, 4>& Hmat){
+Eigen::Matrix<double, 6, 6> AdH;
+Eigen::Matrix<double, 3, 3> p;
+Eigen::Matrix<double, 3, 3> R;  
+Eigen::Matrix<double, 3, 3> pR;  
+
+p << 0, -Hmat(2,3), Hmat(1,3),
+     Hmat(2,3), 0, -Hmat(0,3),
+     -Hmat(1,3), Hmat(0,3), 0;
+R <<  Hmat(0,0), Hmat(0,1), Hmat(0,2),
+      Hmat(1,0), Hmat(1,1), Hmat(1,2),
+      Hmat(2,0), Hmat(2,1), Hmat(2,2);
+pR = p*R;
+
+
+AdH << Hmat(0,0), Hmat(0,1), Hmat(0,2), 0, 0, 0,
+       Hmat(1,0), Hmat(1,1), Hmat(1,2), 0, 0, 0,
+       Hmat(2,0), Hmat(2,1), Hmat(2,2), 0, 0, 0,
+       pR(0,0), pR(0,1), pR(0,2), Hmat(0,0), Hmat(0,1), Hmat(0,2),
+       pR(1,0), pR(1,1), pR(1,2), Hmat(1,0), Hmat(1,1), Hmat(1,2),
+       pR(2,0), pR(2,1), pR(2,2), Hmat(2,0), Hmat(2,1), Hmat(2,2);
+return AdH;
+}
 
 }  // namespace franka_example_controllers
 
