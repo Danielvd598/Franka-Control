@@ -47,6 +47,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
 //impedance parameters
   double k;
   double b;
+  double xd;
+  double yd;
+  double zd;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
   Eigen::Matrix<double, 3, 3> Kt;

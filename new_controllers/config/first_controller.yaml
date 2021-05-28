@@ -9,5 +9,8 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    k: 1
+    k: 3
     b: 0.5
+    xd: 0.4
+    yd: 0
+    zd: 0

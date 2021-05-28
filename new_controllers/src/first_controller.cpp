@@ -69,6 +69,9 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
+  node_handle.getParam("/first_controller/b",xd);
+  node_handle.getParam("/first_controller/b",yd);
+  node_handle.getParam("/first_controller/b",zd);
   return true;
 }
 
@@ -97,8 +100,8 @@ void FirstController::starting(const ros::Time& /*time*/) {
   Go = 0.5*trace(Ko)*I33 - Ko;
   Gt = 0.5*trace(Kt)*I33 - Kt;
   Hv0 << 1, 0, 0, 0.4,
-         0, 1, 0, 0.4,
-         0, 0, 1, 0.4,
+         0, 1, 0, 0,
+         0, 0, 1, 0.2,
          0, 0, 0, 1;
 }
 
@@ -144,10 +147,11 @@ void FirstController::update(const ros::Time& /*time*/,
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n) * Wn;
-  std::cout << W0 << std::endl;
 
-  desired_force_torque(2) = 0;
-  tau_d << jacobian.transpose() * desired_force_torque;
+  tau_d << jacobian.transpose() * W0;
+  
+  /*desired_force_torque(2) = 0;
+  tau_d << jacobian.transpose() * desired_force_torque;*/
 
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
