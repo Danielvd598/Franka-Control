@@ -69,14 +69,19 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
-  Eigen::MatrixXd K(6,6);
-  K << k, 0, 0, 0, 0, 0,
-       0, k, 0, 0, 0, 0,
-       0, 0, k, 0, 0, 0,
-       0, 0, 0, k, 0, 0,
-       0, 0, 0, 0, k, 0,
-       0, 0, 0, 0, 0, k;
-  std::cout << K << std::endl;
+  Eigen::MatrixXd Ko(3,3);
+  Eigen::MatrixXd Kt(3,3);
+  Eigen::MatrixXd Go(3,3);
+  Eigen::MatrixXd Gt(3,3);
+  Ko << k, 0, 0,
+       0, k, 0,
+       0, 0, k;
+  Kt << k, 0, 0,
+       0, k, 0,
+       0, 0, k;
+  double a = trace(Ko);
+      std::cout << a << std::endl;
+
   return true;
 }
 
@@ -128,6 +133,22 @@ Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
   }
   return tau_d_saturated;
 }
+
+// function to find the trace of a matrix
+ double FirstController::trace(Eigen::MatrixXd& matrix){
+   double trace = 0;
+
+  for(int i=0;i<matrix.rows();i++){
+    for(int j=0;j<matrix.rows();j++){
+      if(i==j){
+        trace = trace + matrix(i,j);
+      }
+    }
+  }
+
+
+   return trace;
+ }
 
 
 }  // namespace franka_example_controllers

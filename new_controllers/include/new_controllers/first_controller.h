@@ -47,5 +47,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
 //impedance parameters
   double k;
   double b;
+
+  double trace(Eigen::MatrixXd& matrix);
+
 };
 }
