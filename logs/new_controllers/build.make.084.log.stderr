@@ -1,7 +1,0 @@
-[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:[m[K In member function ‘[01m[Kvirtual bool new_controllers::FirstController::init(hardware_interface::RobotHW*, ros::NodeHandle&)[m[K’:
-[01m[K/home/dijkd/franka_ws/src/franka_ros/new_controllers/src/first_controller.cpp:72:5:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ before ‘[01m[Kstd[m[K’
-     std::cout << k << std::endl;
-[01;32m[K     ^[m[K
-make[2]: *** [CMakeFiles/new_controllers.dir/src/first_controller.cpp.o] Error 1
-make[1]: *** [CMakeFiles/new_controllers.dir/all] Error 2
-make: *** [all] Error 2

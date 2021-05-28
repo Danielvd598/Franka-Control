@@ -1,0 +1,9 @@
+<library path="lib/libnew_controllers">
+  <class name="new_controllers/FirstController" type="new_controllers::FirstController"
+  base_class_type="controller_interface::ControllerBase">
+      <description>
+        A first attempt at making my own controller
+      </description>
+    </class>
+</library>
+

@@ -1,6 +1,0 @@
-franka_ros/new_controllers
-/home/dijkd/franka_ws/devel/.private/new_controllers/cmake.lock /home/dijkd/franka_ws/devel/./cmake.lock
-/home/dijkd/franka_ws/devel/.private/new_controllers/share/new_controllers/cmake/new_controllersConfig-version.cmake /home/dijkd/franka_ws/devel/share/new_controllers/cmake/new_controllersConfig-version.cmake
-/home/dijkd/franka_ws/devel/.private/new_controllers/share/new_controllers/cmake/new_controllersConfig.cmake /home/dijkd/franka_ws/devel/share/new_controllers/cmake/new_controllersConfig.cmake
-/home/dijkd/franka_ws/devel/.private/new_controllers/lib/libnew_controllers.so /home/dijkd/franka_ws/devel/lib/libnew_controllers.so
-/home/dijkd/franka_ws/devel/.private/new_controllers/lib/pkgconfig/new_controllers.pc /home/dijkd/franka_ws/devel/lib/pkgconfig/new_controllers.pc

@@ -1,1 +1,0 @@
-/home/dijkd/franka_ws/devel/.private/franka_example_controllers/lib/pkgconfig/franka_example_controllers.pc

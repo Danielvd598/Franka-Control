@@ -1,8 +1,0 @@
-prefix=/home/dijkd/franka_ws/devel/.private/franka_visualization
-
-Name: franka_visualization
-Description: Description of franka_visualization
-Version: 0.5.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: sensor_msgs roscpp

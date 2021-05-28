@@ -1,8 +1,0 @@
-prefix=/home/dijkd/franka_ws/install
-
-Name: franka_hw
-Description: Description of franka_hw
-Version: 0.5.0
-Cflags: -I${prefix}/include -I/home/dijkd/libfranka/include
-Libs: -L${prefix}/lib -lfranka_hw /home/dijkd/libfranka/build/libfranka.so.0.5.0
-Requires: controller_interface hardware_interface roscpp

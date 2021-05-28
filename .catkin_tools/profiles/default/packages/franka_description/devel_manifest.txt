@@ -1,5 +1,0 @@
-franka_ros/franka_description
-/home/dijkd/franka_ws/devel/.private/franka_description/cmake.lock /home/dijkd/franka_ws/devel/./cmake.lock
-/home/dijkd/franka_ws/devel/.private/franka_description/share/franka_description/cmake/franka_descriptionConfig.cmake /home/dijkd/franka_ws/devel/share/franka_description/cmake/franka_descriptionConfig.cmake
-/home/dijkd/franka_ws/devel/.private/franka_description/share/franka_description/cmake/franka_descriptionConfig-version.cmake /home/dijkd/franka_ws/devel/share/franka_description/cmake/franka_descriptionConfig-version.cmake
-/home/dijkd/franka_ws/devel/.private/franka_description/lib/pkgconfig/franka_description.pc /home/dijkd/franka_ws/devel/lib/pkgconfig/franka_description.pc

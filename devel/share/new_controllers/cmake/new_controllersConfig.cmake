@@ -1,1 +1,0 @@
-/home/dijkd/franka_ws/devel/.private/new_controllers/share/new_controllers/cmake/new_controllersConfig.cmake
