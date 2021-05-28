@@ -50,6 +50,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double xd;
   double yd;
   double zd;
+  double phi;
+  double psi;
+  double theta;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
   Eigen::Matrix<double, 3, 3> Kt;

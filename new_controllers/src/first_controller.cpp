@@ -69,9 +69,12 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
-  node_handle.getParam("/first_controller/b",xd);
-  node_handle.getParam("/first_controller/b",yd);
-  node_handle.getParam("/first_controller/b",zd);
+  node_handle.getParam("/first_controller/xd",xd);
+  node_handle.getParam("/first_controller/yd",yd);
+  node_handle.getParam("/first_controller/zd",zd);
+  node_handle.getParam("/first_controller/phi",phi);
+  node_handle.getParam("/first_controller/psi",psi);
+  node_handle.getParam("/first_controller/theta",theta);
   return true;
 }
 
@@ -94,14 +97,19 @@ void FirstController::starting(const ros::Time& /*time*/) {
   Ko << k, 0, 0,
        0, k, 0,
        0, 0, k;
+  /*Ko << 0, 0, 0,
+       0, 0, 0,
+       0, 0, 0;*/
   Kt << k, 0, 0,
        0, k, 0,
        0, 0, k;
   Go = 0.5*trace(Ko)*I33 - Ko;
   Gt = 0.5*trace(Kt)*I33 - Kt;
-  Hv0 << 1, 0, 0, 0.4,
-         0, 1, 0, 0,
-         0, 0, 1, 0.2,
+  Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(psi) + sin(phi)*sin(theta)*cos(psi), 
+  sin(phi)*sin(psi) + cos(phi)*sin(theta)*cos(phi), xd,
+         cos(theta)*sin(psi), cos(phi)*cos(psi) + sin(phi)*sin(theta)*sin(phi), 
+  -sin(phi)*cos(psi) + cos(phi)*sin(theta)*sin(phi), yd,
+         -sin(theta), sin(phi)*cos(theta), cos(phi)*sin(theta), zd,
          0, 0, 0, 1;
 }
 
@@ -149,9 +157,8 @@ void FirstController::update(const ros::Time& /*time*/,
   W0 = Adjoint(H0n) * Wn;
 
   tau_d << jacobian.transpose() * W0;
-  
-  /*desired_force_torque(2) = 0;
-  tau_d << jacobian.transpose() * desired_force_torque;*/
+
+ 
 
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);

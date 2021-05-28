@@ -13,4 +13,7 @@ first_controller:
     b: 0.5
     xd: 0.4
     yd: 0
-    zd: 0
+    zd: 0.4
+    phi: 0
+    psi: 0
+    theta: 0
