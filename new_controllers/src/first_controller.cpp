@@ -105,11 +105,19 @@ void FirstController::starting(const ros::Time& /*time*/) {
        0, 0, k;
   Go = 0.5*trace(Ko)*I33 - Ko;
   Gt = 0.5*trace(Kt)*I33 - Kt;
-  Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(psi) + sin(phi)*sin(theta)*cos(psi), 
-  sin(phi)*sin(psi) + cos(phi)*sin(theta)*cos(phi), xd,
-         cos(theta)*sin(psi), cos(phi)*cos(psi) + sin(phi)*sin(theta)*sin(phi), 
-  -sin(phi)*cos(psi) + cos(phi)*sin(theta)*sin(phi), yd,
-         -sin(theta), sin(phi)*cos(theta), cos(phi)*sin(theta), zd,
+  B << b, 0, 0, 0, 0, 0, 0,
+       0, b, 0, 0, 0, 0, 0,
+       0, 0, b, 0, 0, 0, 0,
+       0, 0, 0, b, 0, 0, 0,
+       0, 0, 0, 0, b, 0, 0,
+       0, 0, 0, 0, 0, b, 0,
+       0, 0, 0, 0, 0, 0, b;
+
+  Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
+  sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
+         cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
+  -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
+         -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
          0, 0, 0, 1;
 }
 
@@ -125,8 +133,8 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_J_d(  // NOLINT (readability-identifier-naming)
       robot_state.tau_J_d.data()); 
   Eigen::Map<Eigen::Matrix<double, 4, 4> > Hn0(robot_state.O_T_EE.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
-
   Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
   desired_force_torque.setZero();
 
@@ -134,12 +142,17 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
    mn_skew(3,3), fn_skew(3,3);
 
+
+  Hn0 = Hv0;
+  Hn0(0,3) = 0.3;
+  Hn0(2,3) = 0.5;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
+  //  std::cout << "pn0: " << pn0 << std::endl;
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
          Hn0(2,0), Hn0(2,1), Hn0(2,2);
   H0n = Hn0.inverse();
-  Hnv = Hv0.inverse()*Hn0;
+
   Rnv << Hnv(0,0), Hnv(0,1), Hnv(0,2),
          Hnv(1,0), Hnv(1,1), Hnv(1,2),
          Hnv(2,0), Hnv(2,1), Hnv(2,2);
@@ -154,11 +167,12 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
-  W0 = Adjoint(H0n) * Wn;
+  W0 = Adjoint(H0n).transpose() * Wn;
+  tau_d = jacobian.transpose() * W0 - (B * dq);
+  
 
-  tau_d << jacobian.transpose() * W0;
-
- 
+  /*desired_force_torque(2) = 0;
+  tau_d << jacobian.transpose() * desired_force_torque;*/
 
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
