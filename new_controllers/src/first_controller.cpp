@@ -133,6 +133,7 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_J_d(  // NOLINT (readability-identifier-naming)
       robot_state.tau_J_d.data()); 
   Eigen::Map<Eigen::Matrix<double, 4, 4> > Hn0(robot_state.O_T_EE.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1> > q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
   Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
@@ -140,18 +141,29 @@ void FirstController::update(const ros::Time& /*time*/,
 
   Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
   Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
-   mn_skew(3,3), fn_skew(3,3);
+   mn_skew(3,3), fn_skew(3,3), GeoJac(6,7);
 
+  // get all Screw variables and determine Geometric Jacobian
+  Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
+  r1(3), r2(3), r3(3), r4(3), r5(3), r6(3), r7(3);
+  Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
+  r1 << 0, 0, 0; r2 << 0, 0, 0; r3 << 0, 0, 0; r4 << 0.0825, 0, 0;
+  r5 << -0.0825, 0, 0; r6 << 0, 0, 0; r7 << 0.088; 
+  w1 << 0, 0, 1; w2 << sin(q(1)), cos(q(1)), 0; w3 << -sin(q(2)), 0, cos(q(2));
+  w4 << sin(q(1)+q(3)), cos(q(1)+q(3)), 0; w5 << sin(-q(2)+q(4)), 0, cos(-q(2)+q(4));
+  w6 << sin(q(1)+q(3)+q(5)), cos(q(1)+q(3)+q(5)), 0; 
+  w7 << sin(-q(2)+q(4)+q(6)), 0, -cos(-q(2)+q(4)+q(6));
+  T1 << w1, r1.cross(w1);  T2 << w2, r2.cross(w2); T3 << w3, r3.cross(w3);  
+  T4 << w4, r4.cross(w4);  T5 << w5, r5.cross(w5); T6 << w6, r6.cross(w6);
+  T7 << w7, r7.cross(w7);
+  GeoJac << T1, T2, T3, T4, T5, T6, T7; 
 
-  Hn0 = Hv0;
-  Hn0(0,3) = 0.3;
-  Hn0(2,3) = 0.5;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
-  //  std::cout << "pn0: " << pn0 << std::endl;
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
          Hn0(2,0), Hn0(2,1), Hn0(2,2);
   H0n = Hn0.inverse();
+  Hnv = Hv0.inverse()*Hn0;
 
   Rnv << Hnv(0,0), Hnv(0,1), Hnv(0,2),
          Hnv(1,0), Hnv(1,1), Hnv(1,2),
@@ -168,8 +180,10 @@ void FirstController::update(const ros::Time& /*time*/,
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_d = jacobian.transpose() * W0 - (B * dq);
-  
+  tau_d = GeoJac.transpose() * W0 - (B * dq);
+
+  std::cout << "tau_d: \n" << tau_d << std::endl;
+ 
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
@@ -180,7 +194,7 @@ void FirstController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
- 
+
 }
 
 Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(

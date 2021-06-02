@@ -10,10 +10,10 @@ first_controller:
         - panda_joint6
         - panda_joint7
     k: 10
-    b: 5
+    b: 3
     xd: 0.3
     yd: 0
-    zd: 0.35
+    zd: 0.25
     theta: 0
     psi: 0
     phi: 3.1415
