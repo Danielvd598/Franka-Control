@@ -147,12 +147,12 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
   r1(3), r2(3), r3(3), r4(3), r5(3), r6(3), r7(3);
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
-  r1 << 0, 0, 0; r2 << 0, 0, 0; r3 << 0, 0, 0; r4 << 0.0825, 0, 0;
-  r5 << -0.0825, 0, 0; r6 << 0, 0, 0; r7 << 0.088; 
-  w1 << 0, 0, 1; w2 << sin(q(1)), cos(q(1)), 0; w3 << -sin(q(2)), 0, cos(q(2));
-  w4 << sin(q(1)+q(3)), cos(q(1)+q(3)), 0; w5 << sin(-q(2)+q(4)), 0, cos(-q(2)+q(4));
-  w6 << sin(q(1)+q(3)+q(5)), cos(q(1)+q(3)+q(5)), 0; 
-  w7 << sin(-q(2)+q(4)+q(6)), 0, -cos(-q(2)+q(4)+q(6));
+  r1 << 0, 0, 0; r2 << 0, 0, 0; r3 << 0, 0, 0; r4 << 0.0825, 0, 0.333+0.316;
+  r5 << -0.0825, 0, 0.384; r6 << 0, 0, 0; r7 << 0.088, 0, 0; 
+  w1 << 0, 0, 1; w2 << sin(q(0)), cos(q(0)), 0; w3 << -sin(q(1)), 0, cos(q(1));
+  w4 << sin(q(0)+q(2)), cos(q(0)+q(2)), 0; w5 << sin(-q(1)+q(3)), 0, cos(-q(1)+q(3));
+  w6 << sin(q(0)+q(2)+q(4)), cos(q(0)+q(2)+q(4)), 0; 
+  w7 << sin(-q(1)+q(3)+q(5)), 0, -cos(-q(1)+q(3)+q(5));
   T1 << w1, r1.cross(w1);  T2 << w2, r2.cross(w2); T3 << w3, r3.cross(w3);  
   T4 << w4, r4.cross(w4);  T5 << w5, r5.cross(w5); T6 << w6, r6.cross(w6);
   T7 << w7, r7.cross(w7);
@@ -183,10 +183,11 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
   std::cout << "tau_d: \n" << tau_d << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
  
 
-  /*desired_force_torque(2) = 0;
-  tau_d << jacobian.transpose() * desired_force_torque;*/
+  desired_force_torque(2) = 0;
+  tau_d << jacobian.transpose() * desired_force_torque;
 
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
