@@ -67,17 +67,22 @@ class FirstController : public controller_interface::MultiInterfaceController<
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
     Eigen::Matrix<double,4, 4> H0;
-  } Brockett_params [7];
+  } Brockett_p [7];
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, 6, 6> Adjoint(const Eigen::Matrix<double, 4, 4>& Hmat);
-  /*struct Hn0_struct {
+  
+  struct Hn0_struct {
+    int i;
+  };
+  
+ /* struct Hn0_struct {
     Eigen::Matrix<double,4, 4> H0;
-  };*/ // Hn0_matrices [7];
-  struct Hn0_struct Brockett(const Eigen::Matrix<double, 7, 1>& q);
-
+  };*/ // Hn0_matrices [1];
+  struct Hn0_struct Brockett(const Eigen::Matrix<double, 7, 1>& q,
+  struct Brockett_params *Brockett_str, size_t nBrockett);
 
 };
 }

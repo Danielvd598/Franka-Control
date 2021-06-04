@@ -75,18 +75,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/phi",phi);
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
-  return true;
-}
-
-void FirstController::starting(const ros::Time& /*time*/) {
-  franka::RobotState robot_state = state_handle_->getRobotState();
-  std::array<double, 7> gravity_array = model_handle_->getGravity();
-  Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_measured(robot_state.tau_J.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
-  // Bias correction for the current external torque
-  tau_ext_initial_ = tau_measured - gravity;
-  tau_error_.setZero();
-
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
@@ -119,8 +107,8 @@ void FirstController::starting(const ros::Time& /*time*/) {
            0, 0, 1, d1;
            0, 0, 0, 1;
   H20_0 << 1, 0, 0, 0, 
-           0, 1, 0, 0,
-           0, 0, 0, d1;
+           0, 0, 1, 0,
+           0, -1, 0, d1;
            0, 0, 0, 1;
   H30_0 << 1, 0, 0, 0, 
            0, 0, 1, 0,
@@ -142,23 +130,33 @@ void FirstController::starting(const ros::Time& /*time*/) {
            0, 1, 0, 0,
            0, 0, -1, d1+d3+d5;
            0, 0, 0, 1;
-
-  //fill Brockett structure with Twist and H0 matrices
-  Brockett_params[1].Twist = T100; Brockett_params[2].Twist = T211; 
-  Brockett_params[3].Twist = T322; Brockett_params[4].Twist = T433;
-  Brockett_params[5].Twist = T544; Brockett_params[6].Twist = T655;
-  Brockett_params[7].Twist = T766;
-  Brockett_params[1].H0 = H10_0; Brockett_params[2].H0 = H20_0;
-  Brockett_params[3].H0 = H30_0; Brockett_params[4].H0 = H40_0;
-  Brockett_params[5].H0 = H50_0; Brockett_params[6].H0 = H60_0;
-  Brockett_params[7].H0 = H70_0; 
-
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
          cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
   -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
          -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
          0, 0, 0, 1;
+  
+  //fill Brockett structure with Twist and H0 matrices
+  Brockett_p[0].Twist = T100; Brockett_p[1].Twist = T211; 
+  Brockett_p[2].Twist = T322; Brockett_p[3].Twist = T433;
+  Brockett_p[4].Twist = T544; Brockett_p[5].Twist = T655;
+  Brockett_p[6].Twist = T766;
+  Brockett_p[0].H0 = H10_0; Brockett_p[1].H0 = H20_0;
+  Brockett_p[2].H0 = H30_0; Brockett_p[3].H0 = H40_0;
+  Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
+  Brockett_p[6].H0 = H70_0; 
+  return true;
+}
+
+void FirstController::starting(const ros::Time& /*time*/) {
+  franka::RobotState robot_state = state_handle_->getRobotState();
+  std::array<double, 7> gravity_array = model_handle_->getGravity();
+  Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_measured(robot_state.tau_J.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
+  // Bias correction for the current external torque
+  tau_ext_initial_ = tau_measured - gravity;
+  tau_error_.setZero();
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -184,7 +182,7 @@ void FirstController::update(const ros::Time& /*time*/,
    mn_skew(3,3), fn_skew(3,3), GeoJac(6,7);
 
   // get all Screw variables and determine Geometric Jacobian
-  Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
+ /* Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
   r1(3), r2(3), r3(3), r4(3), r5(3), r6(3), r7(3);
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
   r1 << 0, 0, 0; r2 << 0, 0, 0.333; r3 << 0, 0, 0; r4 << 0.0825, 0, 0.333+0.316;
@@ -196,10 +194,11 @@ void FirstController::update(const ros::Time& /*time*/,
   T1 << w1, r1.cross(w1);  T2 << w2, r2.cross(w2); T3 << w3, r3.cross(w3);  
   T4 << w4, r4.cross(w4);  T5 << w5, r5.cross(w5); T6 << w6, r6.cross(w6);
   T7 << w7, r7.cross(w7);
-  GeoJac << T1, T2, T3, T4, T5, T6, T7; 
+  GeoJac << T1, T2, T3, T4, T5, T6, T7; */
 
-  //Brockett(q);
-
+  struct Hn0_struct y = Brockett(q,Brockett_p,sizeof(Brockett_p)/sizeof(Brockett_p[0]));
+ // std::cout <<  y.H0 << std::endl;
+  std::cout << sizeof(Brockett_p)/sizeof(Brockett_p[0]) << std::endl;
 
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
@@ -223,10 +222,11 @@ void FirstController::update(const ros::Time& /*time*/,
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_d = GeoJac.transpose() * W0 - (B * dq);
+ 
+  //tau_d = GeoJac.transpose() * W0 - (B * dq);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
- // std::cout << "q: \n" << q << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
  
 
   desired_force_torque(2) = 0;
@@ -300,13 +300,14 @@ return AdH;
 
 //Brockett's formula to find the homegenous transform from any link 
 //to the base frame
-struct Hn0_struct {
-  int i;
-};
+struct FirstController::Hn0_struct FirstController::Brockett(const 
+    Eigen::Matrix<double, 7, 1>& q, struct Brockett_params *Brockett_str, 
+    size_t nBrockett){
+      std::cout << Brockett_str[1].H0 << std::endl;
 
-struct Hn0_struct FirstController::Brockett(const 
-    Eigen::Matrix<double, 7, 1>& q){
       struct Hn0_struct Hn0_i = {1};
+
+      //std::cout << *Brockett_str.H0 << std::endl;
       return Hn0_i;
     }
 
