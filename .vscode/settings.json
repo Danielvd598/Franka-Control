@@ -62,7 +62,9 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "string": "cpp",
+        "image": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

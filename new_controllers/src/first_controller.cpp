@@ -183,24 +183,43 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
    mn_skew(3,3), fn_skew(3,3), GeoJac(6,7);
 
-  // get all Screw variables and determine Geometric Jacobian
- /* Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
-  r1(3), r2(3), r3(3), r4(3), r5(3), r6(3), r7(3);
+  //Define all twists for the Geometric Jacobian
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
-  r1 << 0, 0, 0; r2 << 0, 0, 0.333; r3 << 0, 0, 0; r4 << 0.0825, 0, 0.333+0.316;
-  r5 << 0, 0, 0; r6 << 0, 0, 0.316+0.384+0.333; r7 << 0.088, 0, 0; 
-  w1 << 0, 0, 1; w2 << sin(q(0)), cos(q(0)), 0; w3 << -sin(q(1)), 0, cos(q(1));
-  w4 << sin(q(0)+q(2)), cos(q(0)+q(2)), 0; w5 << sin(-q(1)+q(3)), 0, cos(-q(1)+q(3));
-  w6 << sin(q(0)+q(2)+q(4)), cos(q(0)+q(2)+q(4)), 0; 
-  w7 << sin(-q(1)+q(3)+q(5)), 0, -cos(-q(1)+q(3)+q(5));
-  T1 << w1, r1.cross(w1);  T2 << w2, r2.cross(w2); T3 << w3, r3.cross(w3);  
-  T4 << w4, r4.cross(w4);  T5 << w5, r5.cross(w5); T6 << w6, r6.cross(w6);
-  T7 << w7, r7.cross(w7);
-  GeoJac << T1, T2, T3, T4, T5, T6, T7; */
 
-  struct Hn0_struct y = Brockett(q,Brockett_p,nDoF);
-  std::cout << y.H0 << std::endl;
+ //assign twist via for loop because I don't know how to get struct from function
+  for(size_t i=0;i<nDoF;i++){
+      switch (i)
+      {
+      case 0:
+        T1 = Brockett_p[i].Twist;
+      case 1:
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T2 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      case 2:
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      case 3: 
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T4 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      case 4:
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T5 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      case 5:
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T6 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      case 6:
+        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        T7 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+        break;
+      
+      default:
+        break;
+      }
+    }
 
+    GeoJac << T1, T2, T3, T4, T5, T6, T7;
+  
+ 
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
@@ -224,14 +243,14 @@ void FirstController::update(const ros::Time& /*time*/,
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
  
-  //tau_d = GeoJac.transpose() * W0 - (B * dq);
+  tau_d = GeoJac.transpose() * W0 - (B * dq);
 
-  //std::cout << "tau_d: \n" << tau_d << std::endl;
+  std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "q: \n" << q << std::endl;
  
 
-  desired_force_torque(2) = 0;
-  tau_d << jacobian.transpose() * desired_force_torque;
+  /*desired_force_torque(2) = 0;
+  tau_d << jacobian.transpose() * desired_force_torque;*/
 
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
@@ -303,42 +322,57 @@ return AdH;
 //to the base frame
 struct FirstController::Hn0_struct FirstController::Brockett(const 
     Eigen::Matrix<double, 7, 1>& q, struct Brockett_params *Brockett_str, 
-    size_t nBrockett){
-      Hn0_matrices[0].H0 =
-       matrixExponential(Brockett_str[0].Twist,q(0))*Brockett_str[0].H0;
-      //std::cout << Brockett_str[0].H0 << std::endl;
+    size_t nBrockett, size_t n){
+      switch (n) {
+        case 0:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*Brockett_str[0].H0;
+        case 1:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*Brockett_str[1].H0;
+        case 2:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*
+          matrixExponential(Brockett_str[2].Twist,q(2))*Brockett_str[1].H0;
+        case 3:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*
+          matrixExponential(Brockett_str[2].Twist,q(2))*
+          matrixExponential(Brockett_str[3].Twist,q(3))*Brockett_str[1].H0;
+        case 4:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*
+          matrixExponential(Brockett_str[2].Twist,q(2))*
+          matrixExponential(Brockett_str[3].Twist,q(3))*
+          matrixExponential(Brockett_str[4].Twist,q(4))*Brockett_str[1].H0;
+        case 5:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*
+          matrixExponential(Brockett_str[2].Twist,q(2))*
+          matrixExponential(Brockett_str[3].Twist,q(3))*
+          matrixExponential(Brockett_str[4].Twist,q(4))*
+          matrixExponential(Brockett_str[5].Twist,q(5))*Brockett_str[1].H0;
+        case 6:
+          Hn0_matrices[0].H0 =
+          matrixExponential(Brockett_str[0].Twist,q(0))*
+          matrixExponential(Brockett_str[1].Twist,q(1))*
+          matrixExponential(Brockett_str[2].Twist,q(2))*
+          matrixExponential(Brockett_str[3].Twist,q(3))*
+          matrixExponential(Brockett_str[4].Twist,q(4))*
+          matrixExponential(Brockett_str[5].Twist,q(5))*
+          matrixExponential(Brockett_str[6].Twist,q(6))*Brockett_str[1].H0;
+          break;
+        default:
+          break;
+    }
+
       return *Hn0_matrices;
     }
-
-/*struct FirstController::Brockett(const 
-    Eigen::Matrix<double, 7, 1>& q){
-  
-  Eigen::Matrix<double, 4, 4> Hn0;
-  struct Hn0_struct {
-    Eigen::Matrix<double,4, 4> H0;
-  } Hn0_matrices [q.rows];
-
-  for (int n=0;n<q.rows();n++)
-  {
-    switch (n)
-    {
-    case 1:
-      Hn0
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-
-      break;
-    
-    default:
-      break;
-    }
-  }
-return Hn0_struct;
-} */
 
 //calculate the matrix exponential using Rodriquez and Mossi
 Eigen::Matrix<double, 4, 4> FirstController::matrixExponential(const 
