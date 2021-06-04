@@ -53,6 +53,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double phi;
   double psi;
   double theta;
+  double a4; double a7; double d1; double d3; double d5; double dF;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
   Eigen::Matrix<double, 3, 3> Kt;
@@ -60,6 +61,11 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 3, 3> Gt;
   Eigen::Matrix<double, 4, 4> Hv0;
   Eigen::Matrix<double, 7, 7> B;
+  Eigen::Matrix<double, 6, 1> T100, T211, T322, T433, T544, T655, T766;
+
+  struct Twists {
+    Eigen::Matrix<double, 6, 1> Twist;
+  } T [7];
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 

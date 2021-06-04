@@ -97,9 +97,6 @@ void FirstController::starting(const ros::Time& /*time*/) {
   Ko << k, 0, 0,
        0, k, 0,
        0, 0, k;
-  /*Ko << 0, 0, 0,
-       0, 0, 0,
-       0, 0, 0;*/
   Kt << k, 0, 0,
        0, k, 0,
        0, 0, k;
@@ -112,6 +109,15 @@ void FirstController::starting(const ros::Time& /*time*/) {
        0, 0, 0, 0, b, 0, 0,
        0, 0, 0, 0, 0, b, 0,
        0, 0, 0, 0, 0, 0, b;
+  a4 = 0.0825; a7 = 0.088; d1 = 0.333; d3 = 0.316; d5 = 0.384; dF = 0.107;
+  T100 << 0, 0, 1, 0, 0, 0; T211 << 0, 1, 0, 0, 0, 0; 
+  T322 << 0, -1, 0, 0, 0, 0; T433 << 0, -1, 0, 0, 0, 0;
+  T544 << 0, 1, 0, 0, 0, 0; T655 << 0, -1, 0, 0, 0, 0;
+  T766 << 0, -1, 0, 0, 0, 0;
+ 
+  //fill Twist structure
+  T[1].Twist = T100; T[2].Twist = T211; T[3].Twist = T322; T[4].Twist = T433;
+  T[5].Twist = T544; T[6].Twist = T655; T[7].Twist = T766;
 
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -147,8 +153,8 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Vector3d w1(3), w2(3), w3(3), w4(3), w5(3), w6(3), w7(3),
   r1(3), r2(3), r3(3), r4(3), r5(3), r6(3), r7(3);
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
-  r1 << 0, 0, 0; r2 << 0, 0, 0; r3 << 0, 0, 0; r4 << 0.0825, 0, 0.333+0.316;
-  r5 << -0.0825, 0, 0.384; r6 << 0, 0, 0; r7 << 0.088, 0, 0; 
+  r1 << 0, 0, 0; r2 << 0, 0, 0.333; r3 << 0, 0, 0; r4 << 0.0825, 0, 0.333+0.316;
+  r5 << 0, 0, 0; r6 << 0, 0, 0.316+0.384+0.333; r7 << 0.088, 0, 0; 
   w1 << 0, 0, 1; w2 << sin(q(0)), cos(q(0)), 0; w3 << -sin(q(1)), 0, cos(q(1));
   w4 << sin(q(0)+q(2)), cos(q(0)+q(2)), 0; w5 << sin(-q(1)+q(3)), 0, cos(-q(1)+q(3));
   w6 << sin(q(0)+q(2)+q(4)), cos(q(0)+q(2)+q(4)), 0; 
@@ -182,8 +188,8 @@ void FirstController::update(const ros::Time& /*time*/,
   W0 = Adjoint(H0n).transpose() * Wn;
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
-  std::cout << "tau_d: \n" << tau_d << std::endl;
-  //std::cout << "q: \n" << q << std::endl;
+  //std::cout << "tau_d: \n" << tau_d << std::endl;
+ // std::cout << "q: \n" << q << std::endl;
  
 
   desired_force_torque(2) = 0;
