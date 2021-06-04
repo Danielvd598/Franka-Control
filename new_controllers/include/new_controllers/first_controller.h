@@ -62,14 +62,22 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 4, 4> Hv0;
   Eigen::Matrix<double, 7, 7> B;
   Eigen::Matrix<double, 6, 1> T100, T211, T322, T433, T544, T655, T766;
+  Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
 
-  struct Twists {
+  struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
-  } T [7];
+    Eigen::Matrix<double,4, 4> H0;
+  } Brockett_params [7];
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, 6, 6> Adjoint(const Eigen::Matrix<double, 4, 4>& Hmat);
+  /*struct Hn0_struct {
+    Eigen::Matrix<double,4, 4> H0;
+  };*/ // Hn0_matrices [7];
+  struct Hn0_struct Brockett(const Eigen::Matrix<double, 7, 1>& q);
+
+
 };
 }

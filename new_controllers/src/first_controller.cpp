@@ -114,10 +114,44 @@ void FirstController::starting(const ros::Time& /*time*/) {
   T322 << 0, -1, 0, 0, 0, 0; T433 << 0, -1, 0, 0, 0, 0;
   T544 << 0, 1, 0, 0, 0, 0; T655 << 0, -1, 0, 0, 0, 0;
   T766 << 0, -1, 0, 0, 0, 0;
- 
-  //fill Twist structure
-  T[1].Twist = T100; T[2].Twist = T211; T[3].Twist = T322; T[4].Twist = T433;
-  T[5].Twist = T544; T[6].Twist = T655; T[7].Twist = T766;
+  H10_0 << 1, 0, 0, 0, 
+           0, 1, 0, 0,
+           0, 0, 1, d1;
+           0, 0, 0, 1;
+  H20_0 << 1, 0, 0, 0, 
+           0, 1, 0, 0,
+           0, 0, 0, d1;
+           0, 0, 0, 1;
+  H30_0 << 1, 0, 0, 0, 
+           0, 0, 1, 0,
+           0, -1, 0, d1+d3;
+           0, 0, 0, 1;
+  H40_0 << 1, 0, 0, a4, 
+           0, 0, -1, 0,
+           0, 1, 0, d1+d3;
+           0, 0, 0, 1;
+  H50_0 << 1, 0, 0, 0, 
+           0, 1, 0, 0,
+           0, 0, 1, d1+d3+d5;
+           0, 0, 0, 1;           
+  H60_0 << 1, 0, 0, 0, 
+           0, 0, -1, 0,
+           0, 1, 0, d1+d3+d5;
+           0, 0, 0, 1;
+  H70_0 << -1, 0, 0, a7, 
+           0, 1, 0, 0,
+           0, 0, -1, d1+d3+d5;
+           0, 0, 0, 1;
+
+  //fill Brockett structure with Twist and H0 matrices
+  Brockett_params[1].Twist = T100; Brockett_params[2].Twist = T211; 
+  Brockett_params[3].Twist = T322; Brockett_params[4].Twist = T433;
+  Brockett_params[5].Twist = T544; Brockett_params[6].Twist = T655;
+  Brockett_params[7].Twist = T766;
+  Brockett_params[1].H0 = H10_0; Brockett_params[2].H0 = H20_0;
+  Brockett_params[3].H0 = H30_0; Brockett_params[4].H0 = H40_0;
+  Brockett_params[5].H0 = H50_0; Brockett_params[6].H0 = H60_0;
+  Brockett_params[7].H0 = H70_0; 
 
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -163,6 +197,9 @@ void FirstController::update(const ros::Time& /*time*/,
   T4 << w4, r4.cross(w4);  T5 << w5, r5.cross(w5); T6 << w6, r6.cross(w6);
   T7 << w7, r7.cross(w7);
   GeoJac << T1, T2, T3, T4, T5, T6, T7; 
+
+  //Brockett(q);
+
 
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
@@ -260,6 +297,48 @@ AdH << Hmat(0,0), Hmat(0,1), Hmat(0,2), 0, 0, 0,
        pR(2,0), pR(2,1), pR(2,2), Hmat(2,0), Hmat(2,1), Hmat(2,2);
 return AdH;
 }
+
+//Brockett's formula to find the homegenous transform from any link 
+//to the base frame
+struct Hn0_struct {
+  int i;
+};
+
+struct Hn0_struct FirstController::Brockett(const 
+    Eigen::Matrix<double, 7, 1>& q){
+      struct Hn0_struct Hn0_i = {1};
+      return Hn0_i;
+    }
+
+/*struct FirstController::Brockett(const 
+    Eigen::Matrix<double, 7, 1>& q){
+  
+  Eigen::Matrix<double, 4, 4> Hn0;
+  struct Hn0_struct {
+    Eigen::Matrix<double,4, 4> H0;
+  } Hn0_matrices [q.rows];
+
+  for (int n=0;n<q.rows();n++)
+  {
+    switch (n)
+    {
+    case 1:
+      Hn0
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+
+      break;
+    
+    default:
+      break;
+    }
+  }
+return Hn0_struct;
+} */
 
 }  // namespace franka_example_controllers
 
