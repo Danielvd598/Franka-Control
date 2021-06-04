@@ -77,7 +77,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   
   struct Hn0_struct {
     Eigen::Matrix<double,4, 4> H0;
-  } Hn0_matrices [2], Hi0;
+  } Hn0_matrices, Hi0;
 
   struct Hn0_struct Brockett(const Eigen::Matrix<double, 7, 1>& q,
   struct Brockett_params *Brockett_str, size_t nBrockett, size_t n);

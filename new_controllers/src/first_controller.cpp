@@ -80,10 +80,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
-
-  I33 << 1, 0, 0,
-         0, 1, 0,
-         0, 0, 1;
   Ko << k, 0, 0,
        0, k, 0,
        0, 0, k;
@@ -113,8 +109,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            0, -1, 0, d1,
            0, 0, 0, 1;
   H30_0 << 1, 0, 0, 0, 
-           0, 0, 1, 0,
-           0, -1, 0, d1+d3,
+           0, 1, 0, 0,
+           0, 0, 1, d1+d3,
            0, 0, 0, 1;
   H40_0 << 1, 0, 0, a4, 
            0, 0, -1, 0,
@@ -192,21 +188,28 @@ void FirstController::update(const ros::Time& /*time*/,
       {
       case 0:
         T1 = Brockett_p[i].Twist;
+        break;
       case 1:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T2 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+        break;
       case 2:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+      //  std::cout << "case 2 Hn0matrices: \n" << Hn0_matrices.H0 << std::endl;
+        break;
       case 3: 
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T4 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+        break;
       case 4:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T5 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+        break;
       case 5:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T6 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
+        break;
       case 6:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T7 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
@@ -217,7 +220,7 @@ void FirstController::update(const ros::Time& /*time*/,
       }
     }
 
-    GeoJac << T1, T2, T3, T4, T5, T6, T7;
+  GeoJac << T1, T2, T3, T4, T5, T6, T7;
   
  
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
@@ -242,11 +245,12 @@ void FirstController::update(const ros::Time& /*time*/,
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
- 
+  
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
-  std::cout << "tau_d: \n" << tau_d << std::endl;
+ // std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "q: \n" << q << std::endl;
+  std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
  
 
   /*desired_force_torque(2) = 0;
@@ -325,53 +329,65 @@ struct FirstController::Hn0_struct FirstController::Brockett(const
     size_t nBrockett, size_t n){
       switch (n) {
         case 0:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*Brockett_str[0].H0;
+          return Hn0_matrices;
+          break;
         case 1:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*Brockett_str[1].H0;
+          std::cout << "case 1 matrixecponential: \n" << matrixExponential(Brockett_str[1].Twist,q(1)) << std::endl;
+          return Hn0_matrices;
+          break;
         case 2:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*Brockett_str[1].H0;
+          matrixExponential(Brockett_str[2].Twist,q(2))*Brockett_str[2].H0;
+          return Hn0_matrices;
+          break;
         case 3:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*
           matrixExponential(Brockett_str[2].Twist,q(2))*
-          matrixExponential(Brockett_str[3].Twist,q(3))*Brockett_str[1].H0;
+          matrixExponential(Brockett_str[3].Twist,q(3))*Brockett_str[3].H0;
+          return Hn0_matrices;
+          break;
         case 4:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*
           matrixExponential(Brockett_str[2].Twist,q(2))*
           matrixExponential(Brockett_str[3].Twist,q(3))*
-          matrixExponential(Brockett_str[4].Twist,q(4))*Brockett_str[1].H0;
+          matrixExponential(Brockett_str[4].Twist,q(4))*Brockett_str[4].H0;
+          return Hn0_matrices;
+          break;
         case 5:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*
           matrixExponential(Brockett_str[2].Twist,q(2))*
           matrixExponential(Brockett_str[3].Twist,q(3))*
           matrixExponential(Brockett_str[4].Twist,q(4))*
-          matrixExponential(Brockett_str[5].Twist,q(5))*Brockett_str[1].H0;
+          matrixExponential(Brockett_str[5].Twist,q(5))*Brockett_str[5].H0;
+          return Hn0_matrices;
+          break;
         case 6:
-          Hn0_matrices[0].H0 =
+          Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*
           matrixExponential(Brockett_str[2].Twist,q(2))*
           matrixExponential(Brockett_str[3].Twist,q(3))*
           matrixExponential(Brockett_str[4].Twist,q(4))*
           matrixExponential(Brockett_str[5].Twist,q(5))*
-          matrixExponential(Brockett_str[6].Twist,q(6))*Brockett_str[1].H0;
+          matrixExponential(Brockett_str[6].Twist,q(6))*Brockett_str[6].H0;
+          return Hn0_matrices;
           break;
         default:
           break;
     }
-
-      return *Hn0_matrices;
     }
 
 //calculate the matrix exponential using Rodriquez and Mossi
@@ -380,15 +396,15 @@ Eigen::Matrix<double, 6, 1>& T, double q_i){
   Eigen::Matrix<double, 4, 4> e;
   Eigen::Vector3d w, v, evec;
   Eigen::Matrix3d w_tilde, emat;
-  w << T(1), T(2), T(3);
-  v << T(4), T(5), T(6);
+  w << T(0), T(1), T(2);
+  v << T(3), T(4), T(5);
   w_tilde  << 0, -w(2), w(1),
              w(2), 0, -w(0),
             -w(1), w(0), 0;
   emat = I33 + w_tilde*sin(q_i) + w_tilde*w_tilde*(1-cos(q_i));
   evec = (1/(w.norm()*w.norm())) * ((I33 - (I33 + w_tilde*sin(q_i) + 
-  w_tilde*w_tilde*(1-cos(q_i))))*w.cross(v)) + w*v.transpose() *w;
-  e << emat(0,0), emat(0,1), emat(0,1), evec(1), 
+  w_tilde*w_tilde*(1-cos(q_i))))*w.cross(v)) + w*v.transpose()*w;
+  e << emat(0,0), emat(0,1), emat(0,2), evec(1), 
        emat(1,0), emat(1,1), emat(1,2), evec(2),
        emat(2,0), emat(2,1), emat(2,2), evec(3),
        0, 0, 0, 1; 
