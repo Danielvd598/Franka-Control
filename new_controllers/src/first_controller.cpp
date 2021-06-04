@@ -75,6 +75,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/phi",phi);
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
+
+  nDoF = 7;
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
@@ -104,31 +106,31 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   T766 << 0, -1, 0, 0, 0, 0;
   H10_0 << 1, 0, 0, 0, 
            0, 1, 0, 0,
-           0, 0, 1, d1;
+           0, 0, 1, d1,
            0, 0, 0, 1;
   H20_0 << 1, 0, 0, 0, 
            0, 0, 1, 0,
-           0, -1, 0, d1;
+           0, -1, 0, d1,
            0, 0, 0, 1;
   H30_0 << 1, 0, 0, 0, 
            0, 0, 1, 0,
-           0, -1, 0, d1+d3;
+           0, -1, 0, d1+d3,
            0, 0, 0, 1;
   H40_0 << 1, 0, 0, a4, 
            0, 0, -1, 0,
-           0, 1, 0, d1+d3;
+           0, 1, 0, d1+d3,
            0, 0, 0, 1;
   H50_0 << 1, 0, 0, 0, 
            0, 1, 0, 0,
-           0, 0, 1, d1+d3+d5;
+           0, 0, 1, d1+d3+d5,
            0, 0, 0, 1;           
   H60_0 << 1, 0, 0, 0, 
            0, 0, -1, 0,
-           0, 1, 0, d1+d3+d5;
+           0, 1, 0, d1+d3+d5,
            0, 0, 0, 1;
   H70_0 << -1, 0, 0, a7, 
            0, 1, 0, 0,
-           0, 0, -1, d1+d3+d5;
+           0, 0, -1, d1+d3+d5,
            0, 0, 0, 1;
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -196,9 +198,8 @@ void FirstController::update(const ros::Time& /*time*/,
   T7 << w7, r7.cross(w7);
   GeoJac << T1, T2, T3, T4, T5, T6, T7; */
 
-  struct Hn0_struct y = Brockett(q,Brockett_p,sizeof(Brockett_p)/sizeof(Brockett_p[0]));
- // std::cout <<  y.H0 << std::endl;
-  std::cout << sizeof(Brockett_p)/sizeof(Brockett_p[0]) << std::endl;
+  struct Hn0_struct y = Brockett(q,Brockett_p,nDoF);
+  std::cout << y.H0 << std::endl;
 
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
@@ -303,12 +304,10 @@ return AdH;
 struct FirstController::Hn0_struct FirstController::Brockett(const 
     Eigen::Matrix<double, 7, 1>& q, struct Brockett_params *Brockett_str, 
     size_t nBrockett){
-      std::cout << Brockett_str[1].H0 << std::endl;
-
-      struct Hn0_struct Hn0_i = {1};
-
-      //std::cout << *Brockett_str.H0 << std::endl;
-      return Hn0_i;
+      Hn0_matrices[0].H0 =
+       matrixExponential(Brockett_str[0].Twist,q(0))*Brockett_str[0].H0;
+      //std::cout << Brockett_str[0].H0 << std::endl;
+      return *Hn0_matrices;
     }
 
 /*struct FirstController::Brockett(const 
@@ -340,6 +339,27 @@ struct FirstController::Hn0_struct FirstController::Brockett(const
   }
 return Hn0_struct;
 } */
+
+//calculate the matrix exponential using Rodriquez and Mossi
+Eigen::Matrix<double, 4, 4> FirstController::matrixExponential(const 
+Eigen::Matrix<double, 6, 1>& T, double q_i){
+  Eigen::Matrix<double, 4, 4> e;
+  Eigen::Vector3d w, v, evec;
+  Eigen::Matrix3d w_tilde, emat;
+  w << T(1), T(2), T(3);
+  v << T(4), T(5), T(6);
+  w_tilde  << 0, -w(2), w(1),
+             w(2), 0, -w(0),
+            -w(1), w(0), 0;
+  emat = I33 + w_tilde*sin(q_i) + w_tilde*w_tilde*(1-cos(q_i));
+  evec = (1/(w.norm()*w.norm())) * ((I33 - (I33 + w_tilde*sin(q_i) + 
+  w_tilde*w_tilde*(1-cos(q_i))))*w.cross(v)) + w*v.transpose() *w;
+  e << emat(0,0), emat(0,1), emat(0,1), evec(1), 
+       emat(1,0), emat(1,1), emat(1,2), evec(2),
+       emat(2,0), emat(2,1), emat(2,2), evec(3),
+       0, 0, 0, 1; 
+  return e;
+}
 
 }  // namespace franka_example_controllers
 

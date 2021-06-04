@@ -45,6 +45,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   static constexpr double kDeltaTauMax{1.0};
 
 //impedance parameters
+  size_t nDoF;
   double k;
   double b;
   double xd;
@@ -74,15 +75,18 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, 6, 6> Adjoint(const Eigen::Matrix<double, 4, 4>& Hmat);
   
-  struct Hn0_struct {
+  /*struct Hn0_struct {
     int i;
-  };
+  };*/
   
- /* struct Hn0_struct {
+  struct Hn0_struct {
     Eigen::Matrix<double,4, 4> H0;
-  };*/ // Hn0_matrices [1];
+  } Hn0_matrices [1];
   struct Hn0_struct Brockett(const Eigen::Matrix<double, 7, 1>& q,
   struct Brockett_params *Brockett_str, size_t nBrockett);
+  Eigen::Matrix<double, 4, 4> matrixExponential(
+    const Eigen::Matrix<double, 6, 1>& T,double q_i);
+
 
 };
 }
