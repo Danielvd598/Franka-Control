@@ -1,6 +1,7 @@
 #include <new_controllers/first_controller.h>
 
 #include <cmath>
+#include <fstream>
 
 #include <controller_interface/controller_base.h>
 #include <pluginlib/class_list_macros.h>
@@ -145,7 +146,21 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[0].H0 = H10_0; Brockett_p[1].H0 = H20_0;
   Brockett_p[2].H0 = H30_0; Brockett_p[3].H0 = H40_0;
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
-  Brockett_p[6].H0 = H70_0; 
+  Brockett_p[6].H0 = H70_0;
+
+  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/FFTorques/test.txt");
+  if(!inFile) {
+    std::cerr << "Unable to open file test.txt!";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    tau_TB.push_back(num);
+  }
+for (size_t i=0; i<tau_TB.size(); i++){
+  std::cout << tau_TB[i] << std::endl;
+}
+
   return true;
 }
 
@@ -248,12 +263,12 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
-  std::cout << "q: \n" << q << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
   /*desired_force_torque(2) = 0;

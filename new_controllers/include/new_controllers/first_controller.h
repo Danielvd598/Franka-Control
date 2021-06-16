@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector> 
+#include <fstream>
 
 #include <controller_interface/multi_interface_controller.h>
 #include <dynamic_reconfigure/server.h>
@@ -66,6 +67,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 6, 1> T100, T211, T322, T433, T544, T655, T766;
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
+  std::ifstream inFile;
+  double num;
+  std::vector<double> tau_TB; 
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
