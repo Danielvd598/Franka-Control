@@ -248,7 +248,7 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
-  //std::cout << "q: \n" << q << std::endl;
+  std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
@@ -268,7 +268,7 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   tau_cmd = tau_d;
-  //tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
+  tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
 
