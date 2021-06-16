@@ -67,7 +67,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  node_handle.getParam("/first_controller/k",k);
+  node_handle.getParam("/first_controller/kt",kt);
+  node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
   node_handle.getParam("/first_controller/xd",xd);
   node_handle.getParam("/first_controller/yd",yd);
@@ -80,12 +81,12 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
-  Ko << k, 0, 0,
-       0, k, 0,
-       0, 0, k;
-  Kt << k, 0, 0,
-       0, k, 0,
-       0, 0, k;
+  Ko << ko, 0, 0,
+       0, ko, 0,
+       0, 0, ko;
+  Kt << kt, 0, 0,
+       0, kt, 0,
+       0, 0, kt;
   Go = 0.5*trace(Ko)*I33 - Ko;
   Gt = 0.5*trace(Kt)*I33 - Kt;
   B << b, 0, 0, 0, 0, 0, 0,
@@ -196,7 +197,6 @@ void FirstController::update(const ros::Time& /*time*/,
         break;
       case 2:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
-        std::cout << "H20 V1: \n" << Hi0.H0 << std::endl; 
         T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 3: 
@@ -241,8 +241,8 @@ void FirstController::update(const ros::Time& /*time*/,
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
   fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
-  mn << 0,0,0;//mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
+  mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
   tau_d = GeoJac.transpose() * W0 - (B * dq);
@@ -253,14 +253,24 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
 
+  // don't want to heavy torques on the last joint
+  if(tau_d[6] > 2){
+    tau_d(6) = 2;
+  }
+  if(tau_d[6] < 2){
+    tau_d[6] = -2; 
+  }
+
   tau_cmd = tau_d;
-  tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
+  //tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
+
+ //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
@@ -349,10 +359,6 @@ struct FirstController::Hn0_struct FirstController::Brockett(const
           matrixExponential(T100,q(0))*
           matrixExponential(T210,q(1))*
           Brockett_str[1].H0;
-          std::cout << "matrixexponential T100: \n" << matrixExponential(T100,q(0)) << std::endl;
-          std::cout << "matrixexponential T210: \n" << matrixExponential(T210,q(1)) << std::endl;
-          std::cout << "Brockett" << Brockett_str[1].H0 << std::endl;
-          std::cout << "H20 V2: \n" << Hn0_matrices.H0 << std::endl; 
           return Hn0_matrices;
           break;
         case 2:
@@ -425,7 +431,7 @@ Eigen::Matrix<double, 6, 1>& T, double q_i){
   evec = (1/(w.norm()*w.norm())) * ((I33 - (I33 + w_tilde*sin(q_i) + 
   w_tilde*w_tilde*(1-cos(q_i))))*w.cross(v)) + w*v.transpose()*w;
   e << emat(0,0), emat(0,1), emat(0,2), evec(0), 
-       emat(1,0), emat(1,1), emat(1,2), evec(1)),
+       emat(1,0), emat(1,1), emat(1,2), evec(1),
        emat(2,0), emat(2,1), emat(2,2), evec(2),
        0, 0, 0, 1; 
   return e;
