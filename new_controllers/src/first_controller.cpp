@@ -127,7 +127,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            0, 0, 0, 1;
   H70_0 << 0.7071, 0.7071, 0, a7, 
            0.7071, -0.7071, 0, 0,
-           0, 0, -1, d1+d3+d5-dF,
+           0, 0, -1, d1+d3+d5-dF-dGripper,
            0, 0, 0, 1;
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -196,6 +196,7 @@ void FirstController::update(const ros::Time& /*time*/,
         break;
       case 2:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        std::cout << "H20 V1: \n" << Hi0.H0 << std::endl; 
         T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 3: 
@@ -247,8 +248,8 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
-  std::cout << "q: \n" << q << std::endl;
-  std::cout << "Hn0: \n" << Hn0 << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
+  //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
@@ -339,58 +340,69 @@ struct FirstController::Hn0_struct FirstController::Brockett(const
       switch (n) {
         case 0:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*Brockett_str[0].H0;
+          matrixExponential(T100,q(0))*
+          Brockett_str[0].H0;
           return Hn0_matrices;
           break;
         case 1:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*Brockett_str[1].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          Brockett_str[1].H0;
+          std::cout << "matrixexponential T100: \n" << matrixExponential(T100,q(0)) << std::endl;
+          std::cout << "matrixexponential T210: \n" << matrixExponential(T210,q(1)) << std::endl;
+          std::cout << "Brockett" << Brockett_str[1].H0 << std::endl;
+          std::cout << "H20 V2: \n" << Hn0_matrices.H0 << std::endl; 
           return Hn0_matrices;
           break;
         case 2:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*Brockett_str[2].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          matrixExponential(T320,q(2))*
+          Brockett_str[2].H0;
           return Hn0_matrices;
           break;
         case 3:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*
-          matrixExponential(Brockett_str[3].Twist,q(3))*Brockett_str[3].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          matrixExponential(T320,q(2))*
+          matrixExponential(T430,q(3))*
+          Brockett_str[3].H0;
           return Hn0_matrices;
           break;
         case 4:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*
-          matrixExponential(Brockett_str[3].Twist,q(3))*
-          matrixExponential(Brockett_str[4].Twist,q(4))*Brockett_str[4].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          matrixExponential(T320,q(2))*
+          matrixExponential(T430,q(3))*
+          matrixExponential(T540,q(4))*
+          Brockett_str[4].H0;
           return Hn0_matrices;
           break;
         case 5:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*
-          matrixExponential(Brockett_str[3].Twist,q(3))*
-          matrixExponential(Brockett_str[4].Twist,q(4))*
-          matrixExponential(Brockett_str[5].Twist,q(5))*Brockett_str[5].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          matrixExponential(T320,q(2))*
+          matrixExponential(T430,q(3))*
+          matrixExponential(T540,q(4))*
+          matrixExponential(T650,q(5))*
+          Brockett_str[5].H0;
           return Hn0_matrices;
           break;
         case 6:
           Hn0_matrices.H0 =
-          matrixExponential(Brockett_str[0].Twist,q(0))*
-          matrixExponential(Brockett_str[1].Twist,q(1))*
-          matrixExponential(Brockett_str[2].Twist,q(2))*
-          matrixExponential(Brockett_str[3].Twist,q(3))*
-          matrixExponential(Brockett_str[4].Twist,q(4))*
-          matrixExponential(Brockett_str[5].Twist,q(5))*
-          matrixExponential(Brockett_str[6].Twist,q(6))*Brockett_str[6].H0;
+          matrixExponential(T100,q(0))*
+          matrixExponential(T210,q(1))*
+          matrixExponential(T320,q(2))*
+          matrixExponential(T430,q(3))*
+          matrixExponential(T540,q(4))*
+          matrixExponential(T650,q(5))*
+          matrixExponential(T760,q(6))*
+          Brockett_str[6].H0;
           return Hn0_matrices;
           break;
         default:
@@ -412,9 +424,9 @@ Eigen::Matrix<double, 6, 1>& T, double q_i){
   emat = I33 + w_tilde*sin(q_i) + w_tilde*w_tilde*(1-cos(q_i));
   evec = (1/(w.norm()*w.norm())) * ((I33 - (I33 + w_tilde*sin(q_i) + 
   w_tilde*w_tilde*(1-cos(q_i))))*w.cross(v)) + w*v.transpose()*w;
-  e << emat(0,0), emat(0,1), emat(0,2), evec(1), 
-       emat(1,0), emat(1,1), emat(1,2), evec(2),
-       emat(2,0), emat(2,1), emat(2,2), evec(3),
+  e << emat(0,0), emat(0,1), emat(0,2), evec(0), 
+       emat(1,0), emat(1,1), emat(1,2), evec(1)),
+       emat(2,0), emat(2,1), emat(2,2), evec(2),
        0, 0, 0, 1; 
   return e;
 }
