@@ -95,11 +95,12 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
        0, 0, 0, 0, b, 0, 0,
        0, 0, 0, 0, 0, b, 0,
        0, 0, 0, 0, 0, 0, b;
-  a4 = 0.0825; a7 = 0.088; d1 = 0.333; d3 = 0.316; d5 = 0.384; dF = 0.107;
-  T100 << 0, 0, 1, 0, 0, 0; T211 << 0, 1, 0, 0, 0, 0; 
-  T322 << 0, -1, 0, 0, 0, 0; T433 << 0, -1, 0, 0, 0, 0;
-  T544 << 0, 1, 0, 0, 0, 0; T655 << 0, -1, 0, 0, 0, 0;
-  T766 << 0, -1, 0, 0, 0, 0;
+  a4=0.0825; a7=0.088; d1=0.333; d3=0.316; d5=0.384; dF=0.107; dGripper=0.102;
+  T100 << 0, 0, 1, 0, 0, 0; T211 << 0, 1, 0, 0, 0, 0; T322 << 0, -1, 0, 0, 0, 0;
+  w4 << 0, -1 ,0; r4 << a4, 0, 0; w5 << 0, 1, 0; r5 << -a4, 0, 0;
+  w7 << 0, -1, 0; r7 << a7, 0, 0;
+  T433 << w4, r4.cross(w4); T544 << w5, r5.cross(w5); T655 << 0, -1, 0, 0, 0, 0;
+  T766 << w7, r7.cross(w7);
   H10_0 << 1, 0, 0, 0, 
            0, 1, 0, 0,
            0, 0, 1, d1,
@@ -124,9 +125,9 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            0, 0, -1, 0,
            0, 1, 0, d1+d3+d5,
            0, 0, 0, 1;
-  H70_0 << -1, 0, 0, a7, 
-           0, 1, 0, 0,
-           0, 0, -1, d1+d3+d5,
+  H70_0 << 0.7071, 0.7071, 0, a7, 
+           0.7071, -0.7071, 0, 0,
+           0, 0, -1, d1+d3+d5-dF,
            0, 0, 0, 1;
   Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
   sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -196,7 +197,6 @@ void FirstController::update(const ros::Time& /*time*/,
       case 2:
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
-      //  std::cout << "case 2 Hn0matrices: \n" << Hn0_matrices.H0 << std::endl;
         break;
       case 3: 
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
@@ -221,8 +221,7 @@ void FirstController::update(const ros::Time& /*time*/,
     }
 
   GeoJac << T1, T2, T3, T4, T5, T6, T7;
-  
- 
+
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
@@ -241,16 +240,19 @@ void FirstController::update(const ros::Time& /*time*/,
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
   fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
-  mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
+  mn << 0,0,0;//mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  
   tau_d = GeoJac.transpose() * W0 - (B * dq);
 
- // std::cout << "tau_d: \n" << tau_d << std::endl;
-  //std::cout << "q: \n" << q << std::endl;
-  std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
+  //std::cout << "tau_d: \n" << tau_d << std::endl;
+  std::cout << "q: \n" << q << std::endl;
+  std::cout << "Hn0: \n" << Hn0 << std::endl;
+  //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
+  //std::cout << "Wn: \n" << Wn << std::endl;
+  //std::cout << "W0: \n" << W0 << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
   /*desired_force_torque(2) = 0;
@@ -262,7 +264,6 @@ void FirstController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
-
 }
 
 Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
@@ -327,6 +328,14 @@ return AdH;
 struct FirstController::Hn0_struct FirstController::Brockett(const 
     Eigen::Matrix<double, 7, 1>& q, struct Brockett_params *Brockett_str, 
     size_t nBrockett, size_t n){
+      T100 = Brockett_str[0].Twist;
+      T210 = Adjoint(Brockett_str[0].H0)*Brockett_str[1].Twist;
+      T320 = Adjoint(Brockett_str[1].H0)*Brockett_str[2].Twist;
+      T430 = Adjoint(Brockett_str[2].H0)*Brockett_str[3].Twist;
+      T540 = Adjoint(Brockett_str[3].H0)*Brockett_str[4].Twist;
+      T650 = Adjoint(Brockett_str[4].H0)*Brockett_str[5].Twist;
+      T760 = Adjoint(Brockett_str[5].H0)*Brockett_str[6].Twist;
+
       switch (n) {
         case 0:
           Hn0_matrices.H0 =
@@ -337,7 +346,6 @@ struct FirstController::Hn0_struct FirstController::Brockett(const
           Hn0_matrices.H0 =
           matrixExponential(Brockett_str[0].Twist,q(0))*
           matrixExponential(Brockett_str[1].Twist,q(1))*Brockett_str[1].H0;
-          std::cout << "case 1 matrixecponential: \n" << matrixExponential(Brockett_str[1].Twist,q(1)) << std::endl;
           return Hn0_matrices;
           break;
         case 2:
