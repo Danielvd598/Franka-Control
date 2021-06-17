@@ -157,10 +157,10 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   while (inFile >> num){
     tau_TB_index.push_back(num);
   }
-  
+
   for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
-    tau_TB.resize(7,i+1);
-    tau_TB << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
+    tau_TB_mat.conservativeResize(7,i+1);
+    tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
               tau_TB_index[2*tau_TB_index.size()/nDoF+i],
               tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
               tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
@@ -168,6 +168,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
               tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
     }
   update_calls = 0;
+
+  
   return true;
 }
 
@@ -196,7 +198,8 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
-  Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
+  Eigen::VectorXd tau_d(7),tau_TF(7),tau_TB(7),desired_force_torque(6), tau_cmd(7), 
+  tau_ext(7);
   desired_force_torque.setZero();
 
   Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
@@ -267,8 +270,7 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_d = GeoJac.transpose() * W0 - (B * dq);
-
+  tau_TF = GeoJac.transpose() * W0 - (B * dq);
   //std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
@@ -279,6 +281,10 @@ void FirstController::update(const ros::Time& /*time*/,
  
 
   //determine the Task-Based torque
+  
+
+  //final control torque
+  tau_d = tau_TF;
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/

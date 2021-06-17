@@ -71,7 +71,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double num;
   size_t update_calls;
   std::vector<double> tau_TB_index;
-  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
