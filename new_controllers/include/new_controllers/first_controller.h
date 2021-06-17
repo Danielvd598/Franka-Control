@@ -69,7 +69,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
   std::ifstream inFile;
   double num;
-  std::vector<double> tau_TB; 
+  size_t update_calls;
+  std::vector<double> tau_TB_index;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB;
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;

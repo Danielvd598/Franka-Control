@@ -148,19 +148,26 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
   Brockett_p[6].H0 = H70_0;
 
-  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/FFTorques/test.txt");
+  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/FFTorques/TB_torques.txt");
   if(!inFile) {
     std::cerr << "Unable to open file test.txt!";
     exit(1);
   }
   num = 0.0;
   while (inFile >> num){
-    tau_TB.push_back(num);
+    tau_TB_index.push_back(num);
   }
-for (size_t i=0; i<tau_TB.size(); i++){
-  std::cout << tau_TB[i] << std::endl;
-}
-
+  
+  for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
+    tau_TB.resize(7,i+1);
+    tau_TB << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
+              tau_TB_index[2*tau_TB_index.size()/nDoF+i],
+              tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
+              tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
+              tau_TB_index[5*tau_TB_index.size()/nDoF+i],
+              tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
+    }
+  update_calls = 0;
   return true;
 }
 
@@ -271,6 +278,8 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
+  //determine the Task-Based torque
+
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
 
@@ -290,6 +299,7 @@ void FirstController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
+  update_calls++; //update function calls
 }
 
 Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
