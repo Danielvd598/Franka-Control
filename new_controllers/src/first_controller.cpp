@@ -277,14 +277,16 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
   //determine the Task-Based torque
-  
+  tau_TB = tau_TB_mat.col(update_calls);
+  std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  std::cout << "update calls:\n " << update_calls << std::endl;
 
   //final control torque
-  tau_d = tau_TF;
+  tau_d =  tau_TB;
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
