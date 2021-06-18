@@ -275,8 +275,15 @@ void FirstController::update(const ros::Time& /*time*/,
       }
     }
 
-  GeoJac << T1, T2, T3, T4, T5, T6, T7;
+  if(update_calls<tau_TB_mat.size()/nDoF){
+    tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
+    Hv0 = Hv0_matrices[update_calls].H;
+  } else {
+    tau_TB << 0,0,0,0,0,0,0;
+    Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
+  }
 
+  GeoJac << T1, T2, T3, T4, T5, T6, T7;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
@@ -300,21 +307,18 @@ void FirstController::update(const ros::Time& /*time*/,
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
   tau_TF = GeoJac.transpose() * W0 - (B * dq);
-  //std::cout << "tau_d: \n" << tau_d << std::endl;
+
+  //std::cout << "Hv0: \n" << Hv0 << std::endl;
+  std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
-  //determine the Task-Based torque
-  if(update_calls<tau_TB_mat.size()/nDoF){
-    tau_TB = tau_TB_mat.col(update_calls);
-  } else {
-    tau_TB << 0,0,0,0,0,0,0;
-  }
+
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 
@@ -328,7 +332,7 @@ void FirstController::update(const ros::Time& /*time*/,
   if(tau_d[6] > 2){
     tau_d(6) = 2;
   }
-  if(tau_d[6] < 2){
+  if(tau_d[6] < -2){
     tau_d[6] = -2; 
   }
 

@@ -9,8 +9,8 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 200
-    ko: 200
+    kt: 600
+    ko: 600
     b: 50
     xd: 0.4
     yd: 0.0
