@@ -181,7 +181,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   }
   inFile.close();
 
-  Hv0_struct *Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
+
+  Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
   for(size_t i=0;i<Hv0_index.size();i++){
     Hv0_optimised << Hv0_index[i], 
                     Hv0_index[Hv0_index.size()/12+i], 
@@ -198,9 +199,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
                     0,0,0,1;
     Hv0_matrices[i].H = Hv0_optimised;
   } 
-  update_calls = 0;
-
-  
+  update_calls = 0;  
   return true;
 }
 

@@ -96,5 +96,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
     Eigen::Matrix<double,4, 4> H;
   };
 
+  Hv0_struct *Hv0_matrices;
+
 };
 }
