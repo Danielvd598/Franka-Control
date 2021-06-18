@@ -9,14 +9,15 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 600
-    ko: 600
+    kt: 850
+    ko: 850
     b: 50
     xd: 0.4
-    yd: 0.0
+    yd: 0
     zd: 0.5
     theta: 0
     psi: 0
     phi: 3.1415
+    TaskFree: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     
   

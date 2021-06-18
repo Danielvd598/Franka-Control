@@ -67,7 +67,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       return false;
     }
   }
-
+  
+  node_handle.getParam("/first_controller/TaskFree",TaskFree);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
@@ -131,13 +132,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            0.7071, -0.7071, 0, 0,
            0, 0, -1, d1+d3+d5-dF-dGripper,
            0, 0, 0, 1;
-  Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
-  sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
-         cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
-  -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
-         -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
-         0, 0, 0, 1;
-  
+
   //fill Brockett structure with Twist and H0 matrices
   Brockett_p[0].Twist = T100; Brockett_p[1].Twist = T211; 
   Brockett_p[2].Twist = T322; Brockett_p[3].Twist = T433;
@@ -181,24 +176,32 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   }
   inFile.close();
 
-
-  Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
-  for(size_t i=0;i<Hv0_index.size();i++){
-    Hv0_optimised << Hv0_index[i], 
-                    Hv0_index[Hv0_index.size()/12+i], 
-                    Hv0_index[2*Hv0_index.size()/12+i], 
-                    Hv0_index[9*Hv0_index.size()/12+i], //Hv0(1,4)
-                    Hv0_index[3*Hv0_index.size()/12+i],
-                    Hv0_index[4*Hv0_index.size()/12+i],
-                    Hv0_index[5*Hv0_index.size()/12+i],
-                    Hv0_index[10*Hv0_index.size()/12+i], //Hv0(2,4)
-                    Hv0_index[6*Hv0_index.size()/12+i],
-                    Hv0_index[7*Hv0_index.size()/12+i],
-                    Hv0_index[8*Hv0_index.size()/12+i],
-                    Hv0_index[11*Hv0_index.size()/12+i], //Hv0(3,4)
-                    0,0,0,1;
-    Hv0_matrices[i].H = Hv0_optimised;
-  } 
+  if(TaskFree){
+    Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
+    for(size_t i=0;i<Hv0_index.size();i++){
+      Hv0_optimised << Hv0_index[i], 
+                      Hv0_index[Hv0_index.size()/12+i], 
+                      Hv0_index[2*Hv0_index.size()/12+i], 
+                      Hv0_index[9*Hv0_index.size()/12+i], //Hv0(1,4)
+                      Hv0_index[3*Hv0_index.size()/12+i],
+                      Hv0_index[4*Hv0_index.size()/12+i],
+                      Hv0_index[5*Hv0_index.size()/12+i],
+                      Hv0_index[10*Hv0_index.size()/12+i], //Hv0(2,4)
+                      Hv0_index[6*Hv0_index.size()/12+i],
+                      Hv0_index[7*Hv0_index.size()/12+i],
+                      Hv0_index[8*Hv0_index.size()/12+i],
+                      Hv0_index[11*Hv0_index.size()/12+i], //Hv0(3,4)
+                      0,0,0,1;
+      Hv0_matrices[i].H = Hv0_optimised;
+    } 
+  } else{
+      Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
+       sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
+             cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
+      -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
+             -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
+              0, 0, 0, 1;
+  }
   update_calls = 0;  
   return true;
 }
@@ -277,10 +280,14 @@ void FirstController::update(const ros::Time& /*time*/,
 
   if(update_calls<tau_TB_mat.size()/nDoF){
     tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
-    Hv0 = Hv0_matrices[update_calls].H;
+    if(TaskFree){ //only overwrite if we want a Task-Free feed-back behaviour
+      Hv0 = Hv0_matrices[update_calls].H;
+    }
   } else {
     tau_TB << 0,0,0,0,0,0,0;
-    Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
+    if(TaskFree) {
+      Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
+    }
   }
 
   GeoJac << T1, T2, T3, T4, T5, T6, T7;
@@ -308,8 +315,10 @@ void FirstController::update(const ros::Time& /*time*/,
   W0 = Adjoint(H0n).transpose() * Wn;
   tau_TF = GeoJac.transpose() * W0 - (B * dq);
 
+  //final control torque
+  tau_d =  tau_TF;
+
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
-  std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
@@ -317,13 +326,8 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   std::cout << "Hnv: \n" << Hnv << std::endl;
  
-
-
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
-
-  //final control torque
-  tau_d =  tau_TF;
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/

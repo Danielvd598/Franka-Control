@@ -47,6 +47,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
 
 //impedance parameters
   size_t nDoF;
+  bool TaskFree;
   double kt, ko;
   double b;
   double xd;
