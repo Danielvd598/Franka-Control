@@ -148,6 +148,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
   Brockett_p[6].H0 = H70_0;
 
+  //read torque data
   inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V1.txt");
   if(!inFile) {
     std::cerr << "Unable to open file test.txt!";
@@ -157,16 +158,46 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   while (inFile >> num){
     tau_TB_index.push_back(num);
   }
-
   for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
     tau_TB_mat.conservativeResize(7,i+1);
     tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
-              tau_TB_index[2*tau_TB_index.size()/nDoF+i],
-              tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
-              tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
-              tau_TB_index[5*tau_TB_index.size()/nDoF+i],
-              tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
-    }
+                         tau_TB_index[2*tau_TB_index.size()/nDoF+i],
+                         tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
+                         tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
+                         tau_TB_index[5*tau_TB_index.size()/nDoF+i],
+                         tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
+  } 
+  inFile.close();
+
+  //read desired configuration data
+  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Hn0_V1.txt");
+  if(!inFile) {
+    std::cerr << "Unable to open file test.txt!";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    Hv0_index.push_back(num);
+  }
+  inFile.close();
+
+  Hv0_struct *Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
+  for(size_t i=0;i<Hv0_index.size();i++){
+    Hv0_optimised << Hv0_index[i], 
+                    Hv0_index[Hv0_index.size()/12+i], 
+                    Hv0_index[2*Hv0_index.size()/12+i], 
+                    Hv0_index[9*Hv0_index.size()/12+i], //Hv0(1,4)
+                    Hv0_index[3*Hv0_index.size()/12+i],
+                    Hv0_index[4*Hv0_index.size()/12+i],
+                    Hv0_index[5*Hv0_index.size()/12+i],
+                    Hv0_index[10*Hv0_index.size()/12+i], //Hv0(2,4)
+                    Hv0_index[6*Hv0_index.size()/12+i],
+                    Hv0_index[7*Hv0_index.size()/12+i],
+                    Hv0_index[8*Hv0_index.size()/12+i],
+                    Hv0_index[11*Hv0_index.size()/12+i], //Hv0(3,4)
+                    0,0,0,1;
+    Hv0_matrices[i].H = Hv0_optimised;
+  } 
   update_calls = 0;
 
   
@@ -240,7 +271,6 @@ void FirstController::update(const ros::Time& /*time*/,
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T7 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
-      
       default:
         break;
       }
@@ -277,7 +307,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
  
 
   //determine the Task-Based torque
@@ -286,8 +316,8 @@ void FirstController::update(const ros::Time& /*time*/,
   } else {
     tau_TB << 0,0,0,0,0,0,0;
   }
-  std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  std::cout << "update calls:\n " << update_calls << std::endl;
+  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  //std::cout << "update calls:\n " << update_calls << std::endl;
 
   //final control torque
   tau_d =  tau_TF;

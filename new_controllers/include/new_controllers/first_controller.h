@@ -62,7 +62,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 3, 3> Kt;
   Eigen::Matrix<double, 3, 3> Go;
   Eigen::Matrix<double, 3, 3> Gt;
-  Eigen::Matrix<double, 4, 4> Hv0;
+  Eigen::Matrix<double, 4, 4> Hv0, Hv0_optimised;
   Eigen::Matrix<double, 7, 7> B;
   Eigen::Matrix<double, 6, 1> T100, T211, T322, T433, T544, T655, T766;
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
@@ -70,13 +70,13 @@ class FirstController : public controller_interface::MultiInterfaceController<
   std::ifstream inFile;
   double num;
   size_t update_calls;
-  std::vector<double> tau_TB_index;
+  std::vector<double> tau_TB_index, Hv0_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
     Eigen::Matrix<double,4, 4> H0;
-  } Brockett_p [7];
+  } Brockett_p [7]; //this structure is 7 items long
 
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 
@@ -92,6 +92,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 4, 4> matrixExponential(
     const Eigen::Matrix<double, 6, 1>& T,double q_i);
 
+  struct Hv0_struct {
+    Eigen::Matrix<double,4, 4> H;
+  };
 
 };
 }
