@@ -148,7 +148,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
   Brockett_p[6].H0 = H70_0;
 
-  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/FFTorques/TB_torques.txt");
+  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V1.txt");
   if(!inFile) {
     std::cerr << "Unable to open file test.txt!";
     exit(1);
@@ -281,12 +281,16 @@ void FirstController::update(const ros::Time& /*time*/,
  
 
   //determine the Task-Based torque
-  tau_TB = tau_TB_mat.col(update_calls);
+  if(update_calls<tau_TB_mat.size()/nDoF){
+    tau_TB = tau_TB_mat.col(update_calls);
+  } else {
+    tau_TB << 0,0,0,0,0,0,0;
+  }
   std::cout << "tau_TB:\n " << tau_TB << std::endl;
   std::cout << "update calls:\n " << update_calls << std::endl;
 
   //final control torque
-  tau_d =  tau_TB;
+  tau_d =  tau_TF;
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
