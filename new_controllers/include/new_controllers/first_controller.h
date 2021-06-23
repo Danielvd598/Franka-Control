@@ -48,6 +48,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
 //impedance parameters
   size_t nDoF;
   bool TaskFree;
+  std::string torque_path;
+  std::string Hv0_path;
   double kt, ko;
   double b;
   double xd;

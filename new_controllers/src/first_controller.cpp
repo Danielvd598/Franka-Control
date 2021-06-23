@@ -67,7 +67,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       return false;
     }
   }
-  
+
   node_handle.getParam("/first_controller/TaskFree",TaskFree);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
@@ -78,6 +78,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/phi",phi);
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
+  node_handle.getParam("/first_controller/torque_path", torque_path);
+  node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
 
   nDoF = 7;
   I33 << 1, 0, 0,
@@ -144,7 +146,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[6].H0 = H70_0;
 
   //read torque data
-  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V1.txt");
+  inFile.open(torque_path);
   if(!inFile) {
     std::cerr << "Unable to open file test.txt!";
     exit(1);
@@ -165,7 +167,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   inFile.close();
 
   //read desired configuration data
-  inFile.open("/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Hn0_V1.txt");
+  inFile.open(Hv0_path);
   if(!inFile) {
     std::cerr << "Unable to open file test.txt!";
     exit(1);
@@ -343,7 +345,8 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_cmd = tau_d;
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
- //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+  //std::cout << "tau_d: \n" << tau_d << std::endl;
+  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
