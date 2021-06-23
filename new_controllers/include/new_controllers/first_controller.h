@@ -45,19 +45,18 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 7, 1> tau_error_;
   static constexpr double kDeltaTauMax{1.0};
 
-//impedance parameters
-  size_t nDoF;
+  /**
+   * control_state = 0: initialising
+   * control_state = 1: joint space PD control
+   * control_state = 2: Cartesian space TB+TF impedance control
+   * */
+  int control_state; 
+  size_t nDoF; 
   bool TaskFree;
-  std::string torque_path;
-  std::string Hv0_path;
-  double kt, ko;
-  double b;
-  double xd;
-  double yd;
-  double zd;
-  double phi;
-  double psi;
-  double theta;
+  std::string torque_path, Hv0_path, qi_path;
+  double kt, ko, b; //impedance control paramaters
+  double xd, yd, zd, phi, psi, theta; // desired configuration
+  double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
@@ -70,10 +69,11 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 6, 1> T100, T211, T322, T433, T544, T655, T766;
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
+  Eigen::Matrix<double, 7, 1> qi; //initial desired joint positions
   std::ifstream inFile;
   double num;
   size_t update_calls;
-  std::vector<double> tau_TB_index, Hv0_index;
+  std::vector<double> tau_TB_index, Hv0_index, qi_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
 
   struct Brockett_params {

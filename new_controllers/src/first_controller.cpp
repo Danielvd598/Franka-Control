@@ -80,7 +80,11 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/theta",theta);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
+  node_handle.getParam("/first_controller/qi_path", qi_path);
+  node_handle.getParam("/first_controller/kp", kp);
+  node_handle.getParam("/first_controller/kd", kd);
 
+  control_state = 0;
   nDoF = 7;
   I33 << 1, 0, 0,
          0, 1, 0,
@@ -148,7 +152,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   //read torque data
   inFile.open(torque_path);
   if(!inFile) {
-    std::cerr << "Unable to open file test.txt!";
+    std::cerr << "Unable to open torque txt file!";
     exit(1);
   }
   num = 0.0;
@@ -169,7 +173,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   //read desired configuration data
   inFile.open(Hv0_path);
   if(!inFile) {
-    std::cerr << "Unable to open file test.txt!";
+    std::cerr << "Unable to open end-effector trajectory txt file";
     exit(1);
   }
   num = 0.0;
@@ -178,9 +182,21 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   }
   inFile.close();
 
+  inFile.open(qi_path);
+  if(!inFile) {
+    std::cerr << "Unable to open initial joint configuration txt file!";
+    exit(1);
+  }
+  num = 0.0;
+  while(inFile >> num){
+    qi_index.push_back(num);
+  }
+  inFile.close();
+  qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
+
   if(TaskFree){
-    Hv0_matrices = new Hv0_struct [Hv0_index.size()]; //create new structure with initialized size
-    for(size_t i=0;i<Hv0_index.size();i++){
+    Hv0_matrices = new Hv0_struct [Hv0_index.size()/12]; //create new structure with initialized size
+    for(size_t i=0;i<Hv0_index.size()/12;i++){
       Hv0_optimised << Hv0_index[i], 
                       Hv0_index[Hv0_index.size()/12+i], 
                       Hv0_index[2*Hv0_index.size()/12+i], 
@@ -196,6 +212,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
                       0,0,0,1;
       Hv0_matrices[i].H = Hv0_optimised;
     } 
+
+    
   } else{
       Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
        sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -204,6 +222,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
              -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
               0, 0, 0, 1;
   }
+
+
   update_calls = 0;  
   return true;
 }
@@ -216,6 +236,7 @@ void FirstController::starting(const ros::Time& /*time*/) {
   // Bias correction for the current external torque
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
+  control_state = 1; //start bringing robot to starting condition
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -342,18 +363,41 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_d[6] = -2; 
   }
 
-  tau_cmd = tau_d;
+  //determine control_state
+  for (size_t i=0;i<q.size();i++)
+  {
+    double error = qi[i]-q[i];
+    if(error>0.001){
+      std::cout << "\nError is not small enough, error: \n" << 
+      error << "\n joint: \n" << i << std::endl;
+      control_state = 1;
+      break;
+    }
+    control_state = 2;
+  }
+
+  //set torque command based on the control state
+  if(control_state=2){
+    tau_cmd = tau_d; //Cartesian impedance control
+  } 
+  if(control_state=1){
+    tau_cmd = kp*(qi-q) + kd*(-dq); //Joint space control
+  }
+ 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
-  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+  
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
-  update_calls++; //update function calls
+  if(control_state==2){
+    update_calls++; //update function calls
+  }
 }
 
+//function to saturate the torque rate
 Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
     const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
