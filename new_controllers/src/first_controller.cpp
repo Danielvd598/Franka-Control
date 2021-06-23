@@ -212,8 +212,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
                       0,0,0,1;
       Hv0_matrices[i].H = Hv0_optimised;
     } 
-
-    
   } else{
       Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
        sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
@@ -339,7 +337,7 @@ void FirstController::update(const ros::Time& /*time*/,
   tau_TF = GeoJac.transpose() * W0 - (B * dq);
 
   //final control torque
-  tau_d =  tau_TF;
+  tau_d =  tau_TF + tau_TB;
 
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
   //std::cout << "q: \n" << q << std::endl;
@@ -349,7 +347,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   std::cout << "Hnv: \n" << Hnv << std::endl;
  
-  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 
   /*desired_force_torque(2) = 0;
@@ -364,26 +362,28 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   //determine control_state
-  for (size_t i=0;i<q.size();i++)
-  {
-    double error = qi[i]-q[i];
-    if(error>0.001){
-      std::cout << "\nError is not small enough, error: \n" << 
-      error << "\n joint: \n" << i << std::endl;
-      control_state = 1;
-      break;
+  if(control_state!=2){
+    for (size_t i=0;i<q.size();i++)
+    {
+      double error = qi[i]-q[i];
+      if(error>0.001){
+        std::cout << "\n Error is not small enough, error: \n" << 
+        error << "\n joint: \n" << i << std::endl;
+        control_state = 1;
+        break;
+      }
+      control_state = 2;
     }
-    control_state = 2;
   }
-
   //set torque command based on the control state
-  if(control_state=2){
+  if(control_state==2){
     tau_cmd = tau_d; //Cartesian impedance control
   } 
-  if(control_state=1){
+  if(control_state==1){
     tau_cmd = kp*(qi-q) + kd*(-dq); //Joint space control
   }
  
+
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
   //std::cout << "tau_d: \n" << tau_d << std::endl;
@@ -392,6 +392,7 @@ void FirstController::update(const ros::Time& /*time*/,
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
+
   if(control_state==2){
     update_calls++; //update function calls
   }
