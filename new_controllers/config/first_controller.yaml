@@ -9,8 +9,8 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 250
-    ko: 250
+    kt: 400
+    ko: 400
     b: 50
     xd: 0.4
     yd: 0
@@ -24,3 +24,4 @@ first_controller:
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/q0_V7.txt'
     kp: 100
     kd: 10
+    dataPrint: true

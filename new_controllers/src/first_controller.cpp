@@ -83,6 +83,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/qi_path", qi_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
+  node_handle.getParam("/first_controller/dataPrint", dataPrint);
 
   control_state = 0;
   nDoF = 7;
@@ -235,6 +236,11 @@ void FirstController::starting(const ros::Time& /*time*/) {
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
   control_state = 1; //start bringing robot to starting condition
+  const char *outputPath="/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/example.txt";
+  if (!dataAnalysis.is_open())
+  {
+    dataAnalysis.open(outputPath); //open file to write data to
+  }
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -347,7 +353,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   std::cout << "Hnv: \n" << Hnv << std::endl;
  
-  std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 
   /*desired_force_torque(2) = 0;
@@ -386,8 +392,23 @@ void FirstController::update(const ros::Time& /*time*/,
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
+  if(dataAnalysis.is_open()){
+    dataAnalysis << tau_TB;
+    } else std::cout << "Unable to open output txt file!";
+
+  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+
+    //additional Torque P controller
+  //tau_cmd = tau_cmd + 0.1*(tau_cmd - (tau_measured - gravity));
+
   //std::cout << "tau_d: \n" << tau_d << std::endl;
-  
+  //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
+  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+  //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
+
+
+
+
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
