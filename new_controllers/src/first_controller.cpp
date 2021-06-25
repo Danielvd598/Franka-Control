@@ -176,33 +176,31 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
                           tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
     } 
     inFile.close();
-  }
 
-  //read desired configuration data
-  inFile.open(Hv0_path);
-  if(!inFile) {
-    std::cerr << "Unable to open end-effector trajectory txt file";
-    exit(1);
-  }
-  num = 0.0;
-  while (inFile >> num){
-    Hv0_index.push_back(num);
-  }
-  inFile.close();
+    //read desired configuration data
+    inFile.open(Hv0_path);
+    if(!inFile) {
+      std::cerr << "Unable to open end-effector trajectory txt file";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      Hv0_index.push_back(num);
+    }
+    inFile.close();
 
-  inFile.open(qi_path);
-  if(!inFile) {
-    std::cerr << "Unable to open initial joint configuration txt file!";
-    exit(1);
-  }
-  num = 0.0;
-  while(inFile >> num){
-    qi_index.push_back(num);
-  }
-  inFile.close();
-  qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
+    inFile.open(qi_path);
+    if(!inFile) {
+      std::cerr << "Unable to open initial joint configuration txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while(inFile >> num){
+      qi_index.push_back(num);
+    }
+    inFile.close();
+    qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
 
-  if(use_optimisation){
     Hv0_matrices = new Hv0_struct [Hv0_index.size()/12]; //create new structure with initialized size
     for(size_t i=0;i<Hv0_index.size()/12;i++){
       Hv0_optimised << Hv0_index[i], 
@@ -394,19 +392,21 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   //determine control_state
-  if(control_state!=2){
-    for (size_t i=0;i<q.size();i++)
-    {
-      double error = qi[i]-q[i];
-      if(error>0.001){
-        std::cout << "\n Error is not small enough, error: \n" << 
-        error << "\n joint: \n" << i << std::endl;
-        control_state = 1;
-        break;
+  if(use_optimisation){
+    if(control_state!=2){
+      for (size_t i=0;i<q.size();i++)
+      {
+        double error = qi[i]-q[i];
+        if(error>0.001){
+          std::cout << "\n Error is not small enough, error: \n" << 
+          error << "\n joint: \n" << i << std::endl;
+          control_state = 1;
+          break;
+        }
+        control_state = 2;
       }
-      control_state = 2;
     }
-  }
+  } else control_state = 2;
   //set torque command based on the control state
   if(control_state==2){
     tau_cmd = tau_d; //Cartesian impedance control

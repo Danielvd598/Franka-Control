@@ -18,7 +18,7 @@ first_controller:
     theta: 0
     psi: 0
     phi: 3.1415
-    TaskBased: true
+    TaskBased: false
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V7.txt'
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Hn0_V7.txt'
