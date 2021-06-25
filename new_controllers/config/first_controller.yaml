@@ -18,10 +18,15 @@ first_controller:
     theta: 0
     psi: 0
     phi: 3.1415
-    TaskFree: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
+    TaskBased: true
+    use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V7.txt'
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Hn0_V7.txt'
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/q0_V7.txt'
     kp: 100
     kd: 10
     dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_q.txt'

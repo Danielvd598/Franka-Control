@@ -52,8 +52,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * */
   int control_state; 
   size_t nDoF; 
-  bool TaskFree, dataPrint;
-  std::string torque_path, Hv0_path, qi_path;
+  bool use_optimisation, TaskBased, dataPrint;
+  std::string torque_path, Hv0_path, qi_path, dataAnalysis_tau_TB_path,
+  dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path;
   double kt, ko, b; //impedance control paramaters
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
@@ -75,7 +76,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
   size_t update_calls;
   std::vector<double> tau_TB_index, Hv0_index, qi_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
-  std::ofstream dataAnalysis;
+  std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
+  dataAnalysis_q;
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;

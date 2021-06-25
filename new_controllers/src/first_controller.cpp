@@ -68,7 +68,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  node_handle.getParam("/first_controller/TaskFree",TaskFree);
+  node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
+  node_handle.getParam("/first_controller/TaskBased",TaskBased);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
@@ -84,6 +85,10 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
+  node_handle.getParam("/first_controller/dataAnalysis_tau_TB_path", dataAnalysis_tau_TB_path);
+  node_handle.getParam("/first_controller/dataAnalysis_tau_TF_path", dataAnalysis_tau_TF_path);
+  node_handle.getParam("/first_controller/dataAnalysis_dq_path", dataAnalysis_dq_path);
+  node_handle.getParam("/first_controller/dataAnalysis_q_path", dataAnalysis_q_path);
 
   control_state = 0;
   nDoF = 7;
@@ -151,25 +156,27 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[6].H0 = H70_0;
 
   //read torque data
-  inFile.open(torque_path);
-  if(!inFile) {
-    std::cerr << "Unable to open torque txt file!";
-    exit(1);
+  if(use_optimisation){
+    inFile.open(torque_path);
+    if(!inFile) {
+      std::cerr << "Unable to open torque txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      tau_TB_index.push_back(num);
+    }
+    for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
+      tau_TB_mat.conservativeResize(7,i+1);
+      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[2*tau_TB_index.size()/nDoF+i],
+                          tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[5*tau_TB_index.size()/nDoF+i],
+                          tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
+    } 
+    inFile.close();
   }
-  num = 0.0;
-  while (inFile >> num){
-    tau_TB_index.push_back(num);
-  }
-  for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
-    tau_TB_mat.conservativeResize(7,i+1);
-    tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
-                         tau_TB_index[2*tau_TB_index.size()/nDoF+i],
-                         tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
-                         tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
-                         tau_TB_index[5*tau_TB_index.size()/nDoF+i],
-                         tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
-  } 
-  inFile.close();
 
   //read desired configuration data
   inFile.open(Hv0_path);
@@ -195,7 +202,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   inFile.close();
   qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
 
-  if(TaskFree){
+  if(use_optimisation){
     Hv0_matrices = new Hv0_struct [Hv0_index.size()/12]; //create new structure with initialized size
     for(size_t i=0;i<Hv0_index.size()/12;i++){
       Hv0_optimised << Hv0_index[i], 
@@ -236,10 +243,24 @@ void FirstController::starting(const ros::Time& /*time*/) {
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
   control_state = 1; //start bringing robot to starting condition
-  const char *outputPath="/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/example.txt";
-  if (!dataAnalysis.is_open())
-  {
-    dataAnalysis.open(outputPath); //open file to write data to
+
+  if(dataPrint){
+    if (!dataAnalysis_tau_TB.is_open())
+    {
+      dataAnalysis_tau_TB.open(dataAnalysis_tau_TB_path); //open file to write data to
+    }
+    if (!dataAnalysis_tau_TF.is_open())
+    {
+      dataAnalysis_tau_TF.open(dataAnalysis_tau_TF_path); //open file to write data to
+    }
+    if (!dataAnalysis_dq.is_open())
+    {
+      dataAnalysis_dq.open(dataAnalysis_dq_path); //open file to write data to
+    }
+    if (!dataAnalysis_q.is_open())
+    {
+      dataAnalysis_q.open(dataAnalysis_q_path); //open file to write data to
+    }
   }
 }
 
@@ -307,15 +328,20 @@ void FirstController::update(const ros::Time& /*time*/,
 
   if(update_calls<tau_TB_mat.size()/nDoF){
     tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
-    if(TaskFree){ //only overwrite if we want a Task-Free feed-back behaviour
+    if(use_optimisation){ //only overwrite if we want a Task-Free feed-back behaviour
       Hv0 = Hv0_matrices[update_calls].H;
     }
   } else {
     tau_TB << 0,0,0,0,0,0,0;
-    if(TaskFree) {
+    if(use_optimisation) {
       Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
     }
   }
+  if (!TaskBased)
+  {
+    tau_TB << 0,0,0,0,0,0,0;
+  }
+  
 
   GeoJac << T1, T2, T3, T4, T5, T6, T7;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
@@ -392,9 +418,17 @@ void FirstController::update(const ros::Time& /*time*/,
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
-  if(dataAnalysis.is_open()){
-    dataAnalysis << tau_TB;
-    } else std::cout << "Unable to open output txt file!";
+  if (dataPrint)
+  {
+    if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
+    && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open()){ 
+      dataAnalysis_tau_TB << tau_TB << std::endl;
+      dataAnalysis_tau_TF << tau_TF << std::endl;
+      dataAnalysis_dq << dq << std::endl;
+      dataAnalysis_q << q << std::endl;
+      } else std::cout << "Unable to open output txt files!";
+  }
+  
 
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
 
