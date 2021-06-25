@@ -1,6 +1,7 @@
 #include <new_controllers/first_controller.h>
 
 #include <cmath>
+#include <fstream>
 
 #include <controller_interface/controller_base.h>
 #include <pluginlib/class_list_macros.h>
@@ -67,6 +68,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
+  node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
+  node_handle.getParam("/first_controller/TaskBased",TaskBased);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
@@ -76,7 +79,18 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/phi",phi);
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
+  node_handle.getParam("/first_controller/torque_path", torque_path);
+  node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
+  node_handle.getParam("/first_controller/qi_path", qi_path);
+  node_handle.getParam("/first_controller/kp", kp);
+  node_handle.getParam("/first_controller/kd", kd);
+  node_handle.getParam("/first_controller/dataPrint", dataPrint);
+  node_handle.getParam("/first_controller/dataAnalysis_tau_TB_path", dataAnalysis_tau_TB_path);
+  node_handle.getParam("/first_controller/dataAnalysis_tau_TF_path", dataAnalysis_tau_TF_path);
+  node_handle.getParam("/first_controller/dataAnalysis_dq_path", dataAnalysis_dq_path);
+  node_handle.getParam("/first_controller/dataAnalysis_q_path", dataAnalysis_q_path);
 
+  control_state = 0;
   nDoF = 7;
   I33 << 1, 0, 0,
          0, 1, 0,
@@ -130,13 +144,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            0.7071, -0.7071, 0, 0,
            0, 0, -1, d1+d3+d5-dF-dGripper,
            0, 0, 0, 1;
-  Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
-  sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
-         cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
-  -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
-         -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
-         0, 0, 0, 1;
-  
+
   //fill Brockett structure with Twist and H0 matrices
   Brockett_p[0].Twist = T100; Brockett_p[1].Twist = T211; 
   Brockett_p[2].Twist = T322; Brockett_p[3].Twist = T433;
@@ -145,7 +153,82 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[0].H0 = H10_0; Brockett_p[1].H0 = H20_0;
   Brockett_p[2].H0 = H30_0; Brockett_p[3].H0 = H40_0;
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
-  Brockett_p[6].H0 = H70_0; 
+  Brockett_p[6].H0 = H70_0;
+
+  //read torque data
+  if(use_optimisation){
+    inFile.open(torque_path);
+    if(!inFile) {
+      std::cerr << "Unable to open torque txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      tau_TB_index.push_back(num);
+    }
+    for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
+      tau_TB_mat.conservativeResize(7,i+1);
+      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[2*tau_TB_index.size()/nDoF+i],
+                          tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
+                          tau_TB_index[5*tau_TB_index.size()/nDoF+i],
+                          tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
+    } 
+    inFile.close();
+
+    //read desired configuration data
+    inFile.open(Hv0_path);
+    if(!inFile) {
+      std::cerr << "Unable to open end-effector trajectory txt file";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      Hv0_index.push_back(num);
+    }
+    inFile.close();
+
+    inFile.open(qi_path);
+    if(!inFile) {
+      std::cerr << "Unable to open initial joint configuration txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while(inFile >> num){
+      qi_index.push_back(num);
+    }
+    inFile.close();
+    qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
+
+    Hv0_matrices = new Hv0_struct [Hv0_index.size()/12]; //create new structure with initialized size
+    for(size_t i=0;i<Hv0_index.size()/12;i++){
+      Hv0_optimised << Hv0_index[i], 
+                      Hv0_index[Hv0_index.size()/12+i], 
+                      Hv0_index[2*Hv0_index.size()/12+i], 
+                      Hv0_index[9*Hv0_index.size()/12+i], //Hv0(1,4)
+                      Hv0_index[3*Hv0_index.size()/12+i],
+                      Hv0_index[4*Hv0_index.size()/12+i],
+                      Hv0_index[5*Hv0_index.size()/12+i],
+                      Hv0_index[10*Hv0_index.size()/12+i], //Hv0(2,4)
+                      Hv0_index[6*Hv0_index.size()/12+i],
+                      Hv0_index[7*Hv0_index.size()/12+i],
+                      Hv0_index[8*Hv0_index.size()/12+i],
+                      Hv0_index[11*Hv0_index.size()/12+i], //Hv0(3,4)
+                      0,0,0,1;
+      Hv0_matrices[i].H = Hv0_optimised;
+    } 
+  } else{
+      Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
+       sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
+             cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
+      -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
+             -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
+              0, 0, 0, 1;
+  }
+
+
+  update_calls = 0;  
   return true;
 }
 
@@ -157,6 +240,26 @@ void FirstController::starting(const ros::Time& /*time*/) {
   // Bias correction for the current external torque
   tau_ext_initial_ = tau_measured - gravity;
   tau_error_.setZero();
+  control_state = 1; //start bringing robot to starting condition
+
+  if(dataPrint){
+    if (!dataAnalysis_tau_TB.is_open())
+    {
+      dataAnalysis_tau_TB.open(dataAnalysis_tau_TB_path); //open file to write data to
+    }
+    if (!dataAnalysis_tau_TF.is_open())
+    {
+      dataAnalysis_tau_TF.open(dataAnalysis_tau_TF_path); //open file to write data to
+    }
+    if (!dataAnalysis_dq.is_open())
+    {
+      dataAnalysis_dq.open(dataAnalysis_dq_path); //open file to write data to
+    }
+    if (!dataAnalysis_q.is_open())
+    {
+      dataAnalysis_q.open(dataAnalysis_q_path); //open file to write data to
+    }
+  }
 }
 
 void FirstController::update(const ros::Time& /*time*/,
@@ -174,7 +277,8 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
-  Eigen::VectorXd tau_d(7), desired_force_torque(6), tau_cmd(7), tau_ext(7);
+  Eigen::VectorXd tau_d(7),tau_TF(7),tau_TB(7),desired_force_torque(6), tau_cmd(7), 
+  tau_ext(7);
   desired_force_torque.setZero();
 
   Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
@@ -215,14 +319,29 @@ void FirstController::update(const ros::Time& /*time*/,
         Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
         T7 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
-      
       default:
         break;
       }
     }
 
-  GeoJac << T1, T2, T3, T4, T5, T6, T7;
+  if(update_calls<tau_TB_mat.size()/nDoF){
+    tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
+    if(use_optimisation){ //only overwrite if we want a Task-Free feed-back behaviour
+      Hv0 = Hv0_matrices[update_calls].H;
+    }
+  } else {
+    tau_TB << 0,0,0,0,0,0,0;
+    if(use_optimisation) {
+      Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
+    }
+  }
+  if (!TaskBased)
+  {
+    tau_TB << 0,0,0,0,0,0,0;
+  }
+  
 
+  GeoJac << T1, T2, T3, T4, T5, T6, T7;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
          Hn0(1,0), Hn0(1,1), Hn0(1,2),
@@ -245,16 +364,21 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_d = GeoJac.transpose() * W0 - (B * dq);
+  tau_TF = GeoJac.transpose() * W0 - (B * dq);
 
-  //std::cout << "tau_d: \n" << tau_d << std::endl;
-  std::cout << "q: \n" << q << std::endl;
+  //final control torque
+  tau_d =  tau_TF + tau_TB;
+
+  //std::cout << "Hv0: \n" << Hv0 << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
   //std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
   std::cout << "Hnv: \n" << Hnv << std::endl;
  
+  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  //std::cout << "update calls:\n " << update_calls << std::endl;
 
   /*desired_force_torque(2) = 0;
   tau_d << jacobian.transpose() * desired_force_torque;*/
@@ -263,20 +387,73 @@ void FirstController::update(const ros::Time& /*time*/,
   if(tau_d[6] > 2){
     tau_d(6) = 2;
   }
-  if(tau_d[6] < 2){
+  if(tau_d[6] < -2){
     tau_d[6] = -2; 
   }
 
-  tau_cmd = tau_d;
+  //determine control_state
+  if(use_optimisation){
+    if(control_state!=2){
+      for (size_t i=0;i<q.size();i++)
+      {
+        double error = qi[i]-q[i];
+        if(error>0.001){
+          std::cout << "\n Error is not small enough, error: \n" << 
+          error << "\n joint: \n" << i << std::endl;
+          control_state = 1;
+          break;
+        }
+        control_state = 2;
+      }
+    }
+  } else control_state = 2;
+  //set torque command based on the control state
+  if(control_state==2){
+    tau_cmd = tau_d; //Cartesian impedance control
+  } 
+  if(control_state==1){
+    tau_cmd = kp*(qi-q) + kd*(-dq); //Joint space control
+  }
+ 
+
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
- //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+  if (dataPrint)
+  {
+    if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
+    && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open()){ 
+      dataAnalysis_tau_TB << tau_TB << std::endl;
+      dataAnalysis_tau_TF << tau_TF << std::endl;
+      dataAnalysis_dq << dq << std::endl;
+      dataAnalysis_q << q << std::endl;
+      } else std::cout << "Unable to open output txt files!";
+  }
+  
+
+  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+
+    //additional Torque P controller
+  //tau_cmd = tau_cmd + 0.1*(tau_cmd - (tau_measured - gravity));
+
+  //std::cout << "tau_d: \n" << tau_d << std::endl;
+  //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
+  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
+  //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
+
+
+
+
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
+
+  if(control_state==2){
+    update_calls++; //update function calls
+  }
 }
 
+//function to saturate the torque rate
 Eigen::Matrix<double, 7, 1> FirstController::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
     const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
