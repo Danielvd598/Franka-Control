@@ -63,7 +63,6 @@ void franka_gripper::gripper_flag_callback(const std_msgs::Int16::ConstPtr& grip
   actionlib::SimpleActionClient<franka_gripper::MoveAction> ac("franka_gripper/move",true);
   
   gripper_flag = *gripper_flag_msg;
-  std::cout << gripper_flag << std::endl;
   franka_gripper::MoveGoal goal;
   if (gripper_flag.data == 1){
     goal.width = franka_gripper::grasp_width;
