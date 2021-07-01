@@ -14,6 +14,7 @@
 
 #include <franka/gripper_state.h>
 #include <franka_gripper/franka_gripper.h>
+#include <actionlib/client/simple_action_client.h>
 
 namespace {
 
@@ -81,6 +82,8 @@ int main(int argc, char** argv) {
     default_grasp_epsilon.inner = epsilon_map["inner"];
     default_grasp_epsilon.outer = epsilon_map["outer"];
   }
+  node_handle.getParam("grasp_width",franka_gripper::grasp_width);
+  node_handle.getParam("release_width",franka_gripper::release_width);
 
   franka::Gripper gripper(robot_ip);
 
@@ -161,6 +164,12 @@ int main(int argc, char** argv) {
   spinner.start();
   ros::Rate rate(publish_rate);
   while (ros::ok()) {
+    actionlib::SimpleActionClient<franka_gripper::MoveAction> ac1("franka_gripper/move", true);
+    franka_gripper::MoveGoal goal1;
+    goal1.width = franka_gripper::grasp_width;
+    goal1.speed = 0.1;
+    ac1.sendGoal(goal1);
+
     if (gripper_state_mutex.try_lock()) {
       sensor_msgs::JointState joint_states;
       joint_states.header.stamp = ros::Time::now();

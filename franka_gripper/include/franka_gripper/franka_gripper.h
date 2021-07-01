@@ -90,4 +90,7 @@ bool stop(const franka::Gripper& gripper, const StopGoalConstPtr& /*goal*/);
  */
 bool grasp(const franka::Gripper& gripper, const GraspGoalConstPtr& goal);
 
+double grasp_width;
+double release_width;
+
 }  // namespace franka_gripper

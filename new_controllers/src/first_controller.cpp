@@ -6,7 +6,6 @@
 #include <controller_interface/controller_base.h>
 #include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
-
 #include <franka/robot_state.h>
 
 namespace new_controllers {

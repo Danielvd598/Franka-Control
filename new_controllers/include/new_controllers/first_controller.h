@@ -30,6 +30,14 @@ class FirstController : public controller_interface::MultiInterfaceController<
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle) override;
   void starting(const ros::Time&) override;
   void update(const ros::Time&, const ros::Duration& period) override;
+  ros::Publisher gripper_flag_pub;
+
+  /***
+   * gripper_flag: 0 - do nothing
+   * gripper_flag: 1 - grasp
+   * gripper_flag: 2 - release
+   * ***/
+  int gripper_flag;
 
  private:
  // Saturation
