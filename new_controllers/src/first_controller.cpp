@@ -7,6 +7,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
 #include <franka/robot_state.h>
+#include <std_msgs/Int16.h>
 
 namespace new_controllers {
 
@@ -228,6 +229,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
 
   update_calls = 0;  
+  gripper_flag = 0;
+  gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
   return true;
 }
 
@@ -427,13 +430,13 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_q << q << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
-  
+
+
+  std_msgs::Int16 gripper_flag_msg;
+  gripper_flag_msg.data = gripper_flag;
+  gripper_flag_pub.publish(gripper_flag_msg);
 
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
-
-    //additional Torque P controller
-  //tau_cmd = tau_cmd + 0.1*(tau_cmd - (tau_measured - gravity));
-
   //std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
