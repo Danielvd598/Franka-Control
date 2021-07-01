@@ -79,6 +79,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/phi",phi);
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
+  node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
@@ -377,7 +378,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
  
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
@@ -409,6 +410,7 @@ void FirstController::update(const ros::Time& /*time*/,
       }
     }
   } else control_state = 2;
+
   //set torque command based on the control state
   if(control_state==2){
     tau_cmd = tau_d; //Cartesian impedance control
@@ -417,9 +419,9 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_cmd = kp*(qi-q) + kd*(-dq); //Joint space control
   }
  
-
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
+  //export data for analysis
   if (dataPrint)
   {
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
@@ -431,6 +433,13 @@ void FirstController::update(const ros::Time& /*time*/,
       } else std::cout << "Unable to open output txt files!";
   }
 
+  // determine gripper flag value
+  if ( std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(0,3) - Hn0(0,3)) < accuracy_thr
+  && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(1,3) - Hn0(1,3)) < accuracy_thr
+  && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(2,3) - Hn0(2,3)) < accuracy_thr
+  ){
+    gripper_flag = 1; 
+  } else gripper_flag = 0;
 
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
@@ -441,10 +450,6 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
-
-
-
-
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));

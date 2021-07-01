@@ -67,6 +67,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
+  double accuracy_thr;
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;

@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <string>
+#include <std_msgs/Int16.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <control_msgs/GripperCommandAction.h>
@@ -16,6 +17,8 @@
 #include <franka_gripper/HomingAction.h>
 #include <franka_gripper/MoveAction.h>
 #include <franka_gripper/StopAction.h>
+
+#include <actionlib/client/simple_action_client.h>
 
 namespace franka_gripper {
 
@@ -92,5 +95,8 @@ bool grasp(const franka::Gripper& gripper, const GraspGoalConstPtr& goal);
 
 double grasp_width;
 double release_width;
-
+double gripper_speed;
+std_msgs::Int16 gripper_flag;
+ros::Subscriber gripper_flag_sub;
+void gripper_flag_callback(const std_msgs::Int16::ConstPtr& gripper_flag_msg);
 }  // namespace franka_gripper

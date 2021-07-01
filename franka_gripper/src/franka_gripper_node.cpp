@@ -58,6 +58,27 @@ using franka_gripper::move;
 using franka_gripper::stop;
 using franka_gripper::updateGripperState;
 
+void franka_gripper::gripper_flag_callback(const std_msgs::Int16::ConstPtr& gripper_flag_msg){
+  //create actionclient for moving the gripper
+  actionlib::SimpleActionClient<franka_gripper::MoveAction> ac("franka_gripper/move",true);
+  
+  gripper_flag = *gripper_flag_msg;
+  std::cout << gripper_flag << std::endl;
+  franka_gripper::MoveGoal goal;
+  if (gripper_flag.data == 1){
+    goal.width = franka_gripper::grasp_width;
+    goal.speed = franka_gripper::gripper_speed;
+    ac.sendGoal(goal);
+  }
+  if (gripper_flag.data == 2){
+    goal.width = franka_gripper::release_width;
+    goal.speed = franka_gripper::gripper_speed;
+    ac.sendGoal(goal);
+  }
+
+}
+
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "franka_gripper_node");
   ros::NodeHandle node_handle("~");
@@ -66,6 +87,7 @@ int main(int argc, char** argv) {
     ROS_ERROR("franka_gripper_node: Could not parse robot_ip parameter");
     return -1;
   }
+
 
   double default_speed(0.1);
   if (node_handle.getParam("default_speed", default_speed)) {
@@ -84,6 +106,7 @@ int main(int argc, char** argv) {
   }
   node_handle.getParam("grasp_width",franka_gripper::grasp_width);
   node_handle.getParam("release_width",franka_gripper::release_width);
+  node_handle.getParam("gripper_speed",franka_gripper::gripper_speed);
 
   franka::Gripper gripper(robot_ip);
 
@@ -163,13 +186,11 @@ int main(int argc, char** argv) {
   ros::AsyncSpinner spinner(2);
   spinner.start();
   ros::Rate rate(publish_rate);
-  while (ros::ok()) {
-    actionlib::SimpleActionClient<franka_gripper::MoveAction> ac1("franka_gripper/move", true);
-    franka_gripper::MoveGoal goal1;
-    goal1.width = franka_gripper::grasp_width;
-    goal1.speed = 0.1;
-    ac1.sendGoal(goal1);
+  franka_gripper::gripper_flag_sub = node_handle.subscribe
+  ("/first_controller/gripper_flag",10,franka_gripper::gripper_flag_callback);
 
+
+  while (ros::ok()) {
     if (gripper_state_mutex.try_lock()) {
       sensor_msgs::JointState joint_states;
       joint_states.header.stamp = ros::Time::now();
