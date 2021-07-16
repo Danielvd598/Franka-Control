@@ -9,9 +9,9 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 400
-    ko: 400
-    b: 50
+    kt: 300
+    ko: 300
+    b: 10
     xd: 0.4
     yd: 0
     zd: 0.5
@@ -21,13 +21,13 @@ first_controller:
     accuracy_thr: 0.05 #[m]
     TaskBased: true
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/TB_torques_V7.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Hn0_V7.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/q0_V7.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_q0.txt'
     kp: 100
     kd: 10
-    dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_q.txt'
+    dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V3_ms_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V3_ms_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V3_ms_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V3_ms_q.txt'

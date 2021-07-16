@@ -378,9 +378,9 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
  
-  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 
   /*desired_force_torque(2) = 0;
