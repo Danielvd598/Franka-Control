@@ -13,7 +13,7 @@ first_controller:
     ko: 300
     b: 10
     xd: 0.5
-    yd: 0
+    yd: 0.3
     zd: 0.5
     theta: 0
     psi: 0

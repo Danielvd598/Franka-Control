@@ -471,14 +471,14 @@ void FirstController::update(const ros::Time& /*time*/,
     if (update_calls <= t_flag[0]){
       gripper_flag = 2; //make sure the gripper is open before grabbing
     }
-    if (update_calls > t_flag[1]*1000 && Hnv(0,3) < accuracy_thr
-    && Hnv(1,3) < accuracy_thr && Hnv(2,3) < accuracy_thr)
+    if (update_calls > t_flag[1]*1000 && abs(Hnv(0,3)) < accuracy_thr
+    && abs(Hnv(1,3)) < accuracy_thr && abs(Hnv(2,3)) < accuracy_thr)
     {
       gripper_flag = 1; 
       ROS_INFO("grabbing!");
     } 
-    if (update_calls > t_flag[3]*1000 && Hnv(0,3) < accuracy_thr
-    && Hnv(1,3) < accuracy_thr && Hnv(2,3) < accuracy_thr){
+    if (update_calls > t_flag[3]*1000 && abs(Hnv(0,3)) < accuracy_thr
+    && abs(Hnv(1,3)) < accuracy_thr && abs(Hnv(2,3)) < accuracy_thr){
       gripper_flag = 2;
       ROS_INFO("releasing!");
     }
