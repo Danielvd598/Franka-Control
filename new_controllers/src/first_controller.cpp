@@ -90,6 +90,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/dataAnalysis_tau_TF_path", dataAnalysis_tau_TF_path);
   node_handle.getParam("/first_controller/dataAnalysis_dq_path", dataAnalysis_dq_path);
   node_handle.getParam("/first_controller/dataAnalysis_q_path", dataAnalysis_q_path);
+  node_handle.getParam("/first_controller/dataAnalysis_tau_measured_path", dataAnalysis_tau_measured_path);
 
   control_state = 0;
   nDoF = 7;
@@ -262,6 +263,10 @@ void FirstController::starting(const ros::Time& /*time*/) {
     {
       dataAnalysis_q.open(dataAnalysis_q_path); //open file to write data to
     }
+    if (!dataAnalysis_tau_measured.is_open())
+    {
+      dataAnalysis_tau_measured.open(dataAnalysis_tau_measured_path); //open file to write data to
+    }
   }
 }
 
@@ -372,20 +377,6 @@ void FirstController::update(const ros::Time& /*time*/,
   //final control torque
   tau_d =  tau_TF + tau_TB;
 
-  //std::cout << "Hv0: \n" << Hv0 << std::endl;
-  //std::cout << "q: \n" << q << std::endl;
-  //std::cout << "Hn0: \n" << Hn0 << std::endl;
-  //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
-  //std::cout << "Wn: \n" << Wn << std::endl;
-  //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
- 
-  std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  //std::cout << "update calls:\n " << update_calls << std::endl;
-
-  /*desired_force_torque(2) = 0;
-  tau_d << jacobian.transpose() * desired_force_torque;*/
-
   // don't want to heavy torques on the last joint
   if(tau_d[6] > 2){
     tau_d(6) = 2;
@@ -425,11 +416,12 @@ void FirstController::update(const ros::Time& /*time*/,
   if (dataPrint)
   {
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
-    && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open()){ 
+    && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open() && dataAnalysis_tau_measured.is_open()){ 
       dataAnalysis_tau_TB << tau_TB << std::endl;
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
       dataAnalysis_q << q << std::endl;
+      dataAnalysis_tau_measured << tau_measured.data() << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
 
@@ -448,8 +440,16 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
-  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
+  //std::cout << "Hv0: \n" << Hv0 << std::endl;
+  //std::cout << "q: \n" << q << std::endl;
+  //std::cout << "Hn0: \n" << Hn0 << std::endl;
+  //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
+  //std::cout << "Wn: \n" << Wn << std::endl;
+  //std::cout << "W0: \n" << W0 << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
+  //std::cout << "update calls:\n " << update_calls << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));

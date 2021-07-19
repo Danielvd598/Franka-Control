@@ -19,7 +19,7 @@ first_controller:
     psi: 0
     phi: 3.1415
     accuracy_thr: 0.05 #[m]
-    TaskBased: true
+    TaskBased: false
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_TB_torques.txt'
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_Hn0.txt'
@@ -31,3 +31,4 @@ first_controller:
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_TF.txt'
     dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_dq.txt'
     dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/Vtest_tau_measured.txt'
