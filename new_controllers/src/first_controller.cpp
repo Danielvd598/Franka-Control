@@ -380,8 +380,6 @@ void FirstController::update(const ros::Time& /*time*/,
             0, 0, kt+0.2*modulation_counter;
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
-    std::cout << "Modulation Counter: \n" << modulation_counter << std::endl;
-    ROS_INFO("using modulated TF stiffness");
     } else { //reset to original stiffness and reset counter
         modulation_counter = 0;
         Ko << ko, 0, 0,
@@ -477,7 +475,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 
