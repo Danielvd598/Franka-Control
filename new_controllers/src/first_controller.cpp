@@ -84,6 +84,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
+  node_handle.getParam("/first_controller/t_flag_path", t_flag_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
@@ -230,6 +231,19 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
               0, 0, 0, 1;
   }
 
+  inFile.open(t_flag_path);
+    if(!inFile) {
+      std::cerr << "Unable to open t_flag txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while(inFile >> num){
+      t_flag_index.push_back(num);
+    }
+  inFile.close();
+  t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3];
+
+  trajectory_state = 0;
   modulation_counter = 0;
   update_calls = 0;  
   gripper_flag = 0;
@@ -454,12 +468,20 @@ void FirstController::update(const ros::Time& /*time*/,
 
   // determine gripper flag value
   if (use_optimisation){
-    if ( std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(0,3) - Hn0(0,3)) < accuracy_thr
-    && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(1,3) - Hn0(1,3)) < accuracy_thr
-    && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(2,3) - Hn0(2,3)) < accuracy_thr
-    ){
+    if (update_calls <= t_flag[0]){
+      gripper_flag = 2; //make sure the gripper is open before grabbing
+    }
+    if (update_calls > t_flag[1]*1000 && Hnv(0,3) < accuracy_thr
+    && Hnv(1,3) < accuracy_thr && Hnv(2,3) < accuracy_thr)
+    {
       gripper_flag = 1; 
-    } else gripper_flag = 0;
+      ROS_INFO("grabbing!");
+    } 
+    if (update_calls > t_flag[3]*1000 && Hnv(0,3) < accuracy_thr
+    && Hnv(1,3) < accuracy_thr && Hnv(2,3) < accuracy_thr){
+      gripper_flag = 2;
+      ROS_INFO("releasing!");
+    }
   }
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;

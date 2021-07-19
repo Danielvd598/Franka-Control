@@ -54,6 +54,14 @@ class FirstController : public controller_interface::MultiInterfaceController<
   static constexpr double kDeltaTauMax{1.0};
 
   /**
+   * trajectory_state = 0: homing above peg
+   * trajectory_state = 1: going down to pick-up peg
+   * trajectory_state = 2: homing above hole
+   * trajectory_state = 3: going to to place peg
+   * */
+  int trajectory_state; 
+  
+  /**
    * control_state = 0: initialising
    * control_state = 1: joint space PD control
    * control_state = 2: Cartesian space TB+TF impedance control
@@ -62,7 +70,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int modulation_counter; // counts how long the stiffness is modulated
   size_t nDoF; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF;
-  std::string torque_path, Hv0_path, qi_path, dataAnalysis_tau_TB_path,
+  std::string torque_path, Hv0_path, qi_path, t_flag_path, dataAnalysis_tau_TB_path,
   dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path,
   dataAnalysis_tau_measured_path;
   double kt, ko, b; //impedance control paramaters
@@ -82,10 +90,11 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
   Eigen::Matrix<double, 7, 1> qi; //initial desired joint positions
+  Eigen::Matrix<double, 4, 1> t_flag; //flags concerning the trajectory phases
   std::ifstream inFile;
   double num;
   size_t update_calls;
-  std::vector<double> tau_TB_index, Hv0_index, qi_index;
+  std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured;
