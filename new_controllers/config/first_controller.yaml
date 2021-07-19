@@ -9,9 +9,9 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 300
-    ko: 300
-    b: 10
+    kt: 10
+    ko: 10
+    b: 1
     xd: 0.4
     yd: 0
     zd: 0.5
@@ -20,7 +20,7 @@ first_controller:
     phi: 3.1415
     accuracy_thr: 0.05 #[m]
     TaskBased: false
-    use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
+    use_optimisation: false #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_TB_torques.txt'
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_Hn0.txt'
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V3_ms_q0.txt'

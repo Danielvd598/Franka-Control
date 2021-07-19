@@ -426,13 +426,14 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   // determine gripper flag value
-  if ( std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(0,3) - Hn0(0,3)) < accuracy_thr
-  && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(1,3) - Hn0(1,3)) < accuracy_thr
-  && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(2,3) - Hn0(2,3)) < accuracy_thr
-  ){
-    gripper_flag = 1; 
-  } else gripper_flag = 0;
-
+  if (use_optimisation){
+    if ( std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(0,3) - Hn0(0,3)) < accuracy_thr
+    && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(1,3) - Hn0(1,3)) < accuracy_thr
+    && std::abs(Hv0_matrices[tau_TB_index.size()/nDoF -1].H(2,3) - Hn0(2,3)) < accuracy_thr
+    ){
+      gripper_flag = 1; 
+    } else gripper_flag = 0;
+  }
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
   gripper_flag_pub.publish(gripper_flag_msg);
