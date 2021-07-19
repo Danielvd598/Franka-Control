@@ -6,3 +6,6 @@ default_speed: 0.1  # [m/s]
 default_grasp_epsilon:
   inner: 0.005 # [m]
   outer: 0.005 # [m]
+grasp_width: 0.025 #[m]
+release_width: 0.07 #[m]
+gripper_speed: 0.1 #[m/s]

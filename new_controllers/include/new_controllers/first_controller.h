@@ -30,6 +30,14 @@ class FirstController : public controller_interface::MultiInterfaceController<
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle) override;
   void starting(const ros::Time&) override;
   void update(const ros::Time&, const ros::Duration& period) override;
+  ros::Publisher gripper_flag_pub;
+
+  /***
+   * gripper_flag: 0 - do nothing
+   * gripper_flag: 1 - grasp
+   * gripper_flag: 2 - release
+   * ***/
+  int gripper_flag;
 
  private:
  // Saturation
@@ -59,6 +67,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
+  double accuracy_thr;
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
