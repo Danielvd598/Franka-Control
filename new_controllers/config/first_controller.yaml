@@ -21,6 +21,7 @@ first_controller:
     accuracy_thr: 0.05 #[m]
     TaskBased: false
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
+    use_modulated_TF: true 
     torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_TB_torques.txt'
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_Hn0.txt'
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_q0.txt'

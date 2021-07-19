@@ -69,6 +69,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   }
 
   node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
+  node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
   node_handle.getParam("/first_controller/TaskBased",TaskBased);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
@@ -229,7 +230,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
               0, 0, 0, 1;
   }
 
-
+  modulation_counter = 0;
   update_calls = 0;  
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
@@ -365,6 +366,34 @@ void FirstController::update(const ros::Time& /*time*/,
   pnv_skew << 0, -pnv(2), pnv(1),
             pnv(2), 0, -pnv(0),
             -pnv(1), pnv(0), 0;
+
+  if(use_modulated_TF){
+    if ((dq.array() < 0.1).all()){
+      if(modulation_counter < 3000) { //put an upper limit on the maximum stiffness
+        modulation_counter++;
+      }
+      Ko << ko+0.2*modulation_counter, 0, 0,
+            0, ko+0.2*modulation_counter, 0,
+            0, 0, ko+0.2*modulation_counter;
+      Kt << kt+0.2*modulation_counter, 0, 0,
+            0, kt+0.2*modulation_counter, 0,
+            0, 0, kt+0.2*modulation_counter;
+    Go = 0.5*trace(Ko)*I33 - Ko;
+    Gt = 0.5*trace(Kt)*I33 - Kt;
+    std::cout << "Modulation Counter: \n" << modulation_counter << std::endl;
+    ROS_INFO("using modulated TF stiffness");
+    } else { //reset to original stiffness and reset counter
+        modulation_counter = 0;
+        Ko << ko, 0, 0,
+              0, ko, 0,
+              0, 0, ko;
+        Kt << kt, 0, 0,
+              0, kt, 0,
+              0, 0, kt;
+        Go = 0.5*trace(Ko)*I33 - Ko;
+        Gt = 0.5*trace(Kt)*I33 - Kt;
+    }
+  }
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
   fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
@@ -448,7 +477,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 

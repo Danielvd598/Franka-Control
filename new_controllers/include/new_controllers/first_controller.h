@@ -59,8 +59,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * control_state = 2: Cartesian space TB+TF impedance control
    * */
   int control_state; 
+  int modulation_counter; // counts how long the stiffness is modulated
   size_t nDoF; 
-  bool use_optimisation, TaskBased, dataPrint;
+  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF;
   std::string torque_path, Hv0_path, qi_path, dataAnalysis_tau_TB_path,
   dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path,
   dataAnalysis_tau_measured_path;
