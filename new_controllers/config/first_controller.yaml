@@ -20,18 +20,18 @@ first_controller:
     phi: 3.1415
     accuracy_thr: 0.03 #[m]
     modulation_factor: 0.5
-    TaskBased: true
+    TaskBased: false
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true 
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_fix_k390b2_5_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_fix_k390b2_5_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_fix_k390b2_5_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_fix_k390b2_5_t_flag.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_t_flag.txt'
     kp: 100
     kd: 10
-    dataPrint: true
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_fix_k390b2_5_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_fix_k390b2_5_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_fix_k390b2_5_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_fix_k390b2_5_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_fix_k390b2_5_tau_measured.txt'
+    dataPrint: false
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_tau_measured.txt'
