@@ -9,23 +9,24 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 300
-    ko: 300
+    kt: 400
+    ko: 400
     b: 10
     xd: 0.5
-    yd: 0.3
-    zd: 0.5
+    yd: 0.0
+    zd: 0.1
     theta: 0
     psi: 0
     phi: 3.1415
     accuracy_thr: 0.03 #[m]
-    TaskBased: false
+    modulation_factor: 0.3
+    TaskBased: true
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true 
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V1_fix_high_t_flag.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_t_flag.txt'
     kp: 100
     kd: 10
     dataPrint: false

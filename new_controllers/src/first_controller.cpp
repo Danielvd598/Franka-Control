@@ -81,6 +81,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
   node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
+  node_handle.getParam("/first_controller/modulation_factor",modulation_factor);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
@@ -386,12 +387,12 @@ void FirstController::update(const ros::Time& /*time*/,
       if(modulation_counter < 3000) { //put an upper limit on the maximum stiffness
         modulation_counter++;
       }
-      Ko << ko+0.2*modulation_counter, 0, 0,
-            0, ko+0.2*modulation_counter, 0,
-            0, 0, ko+0.2*modulation_counter;
-      Kt << kt+0.2*modulation_counter, 0, 0,
-            0, kt+0.2*modulation_counter, 0,
-            0, 0, kt+0.2*modulation_counter;
+      Ko << ko+modulation_factor*modulation_counter, 0, 0,
+            0, ko+modulation_factor*modulation_counter, 0,
+            0, 0, ko+modulation_factor*modulation_counter;
+      Kt << kt+modulation_factor*modulation_counter, 0, 0,
+            0, kt+modulation_factor*modulation_counter, 0,
+            0, 0, kt+modulation_factor*modulation_counter;
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
     } else { //reset to original stiffness and reset counter
