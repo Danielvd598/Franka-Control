@@ -463,7 +463,7 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
       dataAnalysis_q << q << std::endl;
-      dataAnalysis_tau_measured << tau_measured.data() << std::endl;
+      dataAnalysis_tau_measured << *tau_measured.data() << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
 
@@ -472,8 +472,9 @@ void FirstController::update(const ros::Time& /*time*/,
     if (update_calls <= t_flag[0]){
       gripper_flag = 2; //make sure the gripper is open before grabbing
     }
-    if (update_calls > t_flag[1]*1000 && abs(Hnv(0,3)) < accuracy_thr
-    && abs(Hnv(1,3)) < accuracy_thr && abs(Hnv(2,3)) < accuracy_thr)
+    if (update_calls > t_flag[1]*1000 && update_calls < t_flag[2]*1000 && 
+    abs(Hnv(0,3)) < accuracy_thr && abs(Hnv(1,3)) < accuracy_thr && 
+    abs(Hnv(2,3)) < accuracy_thr)
     {
       gripper_flag = 1; 
       ROS_INFO("grabbing!");
