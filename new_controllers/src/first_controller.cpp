@@ -70,6 +70,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
+  node_handle.getParam("/first_controller/use_cyclic",use_cyclic);
   node_handle.getParam("/first_controller/TaskBased",TaskBased);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
@@ -88,6 +89,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/t_flag_path", t_flag_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
+  node_handle.getParam("/first_controller/cycle_wait_period", cycle_wait_period);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
   node_handle.getParam("/first_controller/dataAnalysis_tau_TB_path", dataAnalysis_tau_TB_path);
   node_handle.getParam("/first_controller/dataAnalysis_tau_TF_path", dataAnalysis_tau_TF_path);
@@ -493,6 +495,11 @@ void FirstController::update(const ros::Time& /*time*/,
       gripper_flag = 2;
       ROS_INFO("releasing!");
     }
+    if (update_calls > (t_flag[3]*1000 + cycle_wait_period) && gripper_flag == 2 && use_cyclic){
+      ROS_INFO("completed task, returning to initial position and repeating task");
+      control_state = 1; 
+      update_calls = 0;
+    }
   }
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
@@ -504,11 +511,11 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
   //std::cout << "q: \n" << q << std::endl;
-  //std::cout << "Hn0: \n" << Hn0 << std::endl;
+  std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "update calls:\n " << update_calls << std::endl;
 

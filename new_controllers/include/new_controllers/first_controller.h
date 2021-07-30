@@ -69,11 +69,12 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int control_state; 
   int modulation_counter; // counts how long the stiffness is modulated
   size_t nDoF; 
-  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF;
+  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, dataAnalysis_tau_TB_path,
   dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path,
   dataAnalysis_tau_measured_path;
   double kt, ko, b; //impedance control paramaters
+  double cycle_wait_period; //how long the programm should wait before repeating task [ms]
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
