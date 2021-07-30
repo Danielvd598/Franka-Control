@@ -364,7 +364,6 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_TB << 0,0,0,0,0,0,0;
   }
   
-
   GeoJac << T1, T2, T3, T4, T5, T6, T7;
   pn0 << Hn0(0,3), Hn0(1,3), Hn0(2,3);
   Rn0 << Hn0(0,0), Hn0(0,1), Hn0(0,2),
@@ -433,13 +432,16 @@ void FirstController::update(const ros::Time& /*time*/,
       for (size_t i=0;i<q.size();i++)
       {
         double error = qi[i]-q[i];
-        if(error>0.001){
+        if(std::abs(error)>0.0005){
           std::cout << "\n Error is not small enough, error: \n" << 
-          error << "\n joint: \n" << i << std::endl;
+          error << "\n joint #: \n" << i << std::endl;
           control_state = 1;
           break;
         }
-        control_state = 2;
+        else {
+          std::cout << "\n Within limits, starting trajectory! \n" << std::endl;
+          control_state = 2;
+        }
       }
     }
   } else control_state = 2;
@@ -449,7 +451,14 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_cmd = tau_d; //Cartesian impedance control
   } 
   if(control_state==1){
-    tau_cmd = kp*(qi-q) + kd*(-dq); //Joint space control
+    Eigen::Matrix<double, 7, 1> P_action;
+    for (size_t i=0;i<nDoF; i++)
+    {
+      P_action[i] = std::abs(kp/dq[i]);
+      tau_cmd[i] = P_action[i] * (qi[i]-q[i]) + kd*(-dq[i]); //Joint space control
+    }
+    std::cout << "P_action: \n" << P_action << std::endl;
+    std::cout << "joint error: \n" << qi-q << std::endl;
   }
  
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
@@ -473,14 +482,14 @@ void FirstController::update(const ros::Time& /*time*/,
       gripper_flag = 2; //make sure the gripper is open before grabbing
     }
     if (update_calls > t_flag[1]*1000 && update_calls < t_flag[2]*1000 && 
-    abs(Hnv(0,3)) < accuracy_thr && abs(Hnv(1,3)) < accuracy_thr && 
-    abs(Hnv(2,3)) < accuracy_thr)
+    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
+    std::abs(Hnv(2,3)) < accuracy_thr)
     {
       gripper_flag = 1; 
       ROS_INFO("grabbing!");
     } 
-    if (update_calls > t_flag[3]*1000 && abs(Hnv(0,3)) < accuracy_thr
-    && abs(Hnv(1,3)) < accuracy_thr && abs(Hnv(2,3)) < accuracy_thr){
+    if (update_calls > t_flag[3]*1000 && std::abs(Hnv(0,3)) < accuracy_thr
+    && std::abs(Hnv(1,3)) < accuracy_thr && std::abs(Hnv(2,3)) < accuracy_thr){
       gripper_flag = 2;
       ROS_INFO("releasing!");
     }

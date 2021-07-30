@@ -64,7 +64,8 @@
         "valarray": "cpp",
         "dense": "cpp",
         "string": "cpp",
-        "image": "cpp"
+        "image": "cpp",
+        "random": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

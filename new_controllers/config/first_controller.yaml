@@ -27,8 +27,8 @@ first_controller:
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_Hn0.txt'
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_q0.txt'
     t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V2_var_t_flag.txt'
-    kp: 100
-    kd: 10
+    kp: 1
+    kd: 5
     dataPrint: false
     dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_tau_TB.txt'
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V2_var_TF_tau_TF.txt'
