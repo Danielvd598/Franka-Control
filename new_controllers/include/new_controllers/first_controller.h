@@ -68,7 +68,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * */
   int control_state; 
   int modulation_counter; // counts how long the stiffness is modulated
-  size_t nDoF; 
+  size_t nDoF, optimisation_length; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, dataAnalysis_tau_TB_path,
   dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path;

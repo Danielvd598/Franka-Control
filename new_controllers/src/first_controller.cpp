@@ -250,6 +250,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   update_calls = 0;  
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
+  optimisation_length = tau_TB_mat.size()/nDoF;
   return true;
 }
 
@@ -345,7 +346,7 @@ void FirstController::update(const ros::Time& /*time*/,
       }
     }
 
-  if(update_calls<tau_TB_mat.size()/nDoF){
+  if(update_calls<optimisation_length){
     tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
     if(use_optimisation){ //only overwrite if we want a Task-Free feed-back behaviour
       Hv0 = Hv0_matrices[update_calls].H;
@@ -353,7 +354,7 @@ void FirstController::update(const ros::Time& /*time*/,
   } else { //no TB torque
     tau_TB << 0,0,0,0,0,0,0;
     if(use_optimisation) { //if you still want to use the optimisation use the last matrix as reference
-      Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
+      Hv0 = Hv0_matrices[optimisation_length - 1].H;
     }
   }
   if (!TaskBased)
