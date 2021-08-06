@@ -417,7 +417,7 @@ void FirstController::update(const ros::Time& /*time*/,
 
   // don't want to heavy torques on the last joint
   if(tau_d[6] > 2){
-    tau_d(6) = 2;
+    tau_d[6] = 2;
   }
   if(tau_d[6] < -2){
     tau_d[6] = -2; 
