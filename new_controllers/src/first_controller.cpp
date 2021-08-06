@@ -350,9 +350,9 @@ void FirstController::update(const ros::Time& /*time*/,
     if(use_optimisation){ //only overwrite if we want a Task-Free feed-back behaviour
       Hv0 = Hv0_matrices[update_calls].H;
     }
-  } else {
+  } else { //no TB torque
     tau_TB << 0,0,0,0,0,0,0;
-    if(use_optimisation) {
+    if(use_optimisation) { //if you still want to use the optimisation use the last matrix as reference
       Hv0 = Hv0_matrices[tau_TB_mat.size()/nDoF - 1].H;
     }
   }
