@@ -20,7 +20,7 @@ first_controller:
     phi: 3.1415
     accuracy_thr: 0.03 #[m]
     modulation_factor: 0.5
-    TaskBased: true
+    TaskBased: false
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_cyclic: false #bool for using completing the trajectory repetivily 
@@ -32,7 +32,7 @@ first_controller:
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
     dataPrint: true
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_1_fixopt_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_1_fixopt_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_1_fixopt_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_1_fixopt_q.txt'
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_3_fixopt_TF_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_3_fixopt_TF_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_3_fixopt_TF_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_3_fixopt_TF_q.txt'
