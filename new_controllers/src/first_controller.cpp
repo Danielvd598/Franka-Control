@@ -71,10 +71,12 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
   node_handle.getParam("/first_controller/use_cyclic",use_cyclic);
+  node_handle.getParam("/first_controller/use_dynamic_injection",use_dynamic_injection);
   node_handle.getParam("/first_controller/TaskBased",TaskBased);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
+  node_handle.getParam("/first_controller/bdrain",bdrain);
   node_handle.getParam("/first_controller/xd",xd);
   node_handle.getParam("/first_controller/yd",yd);
   node_handle.getParam("/first_controller/zd",zd);
@@ -83,6 +85,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/theta",theta);
   node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
   node_handle.getParam("/first_controller/modulation_factor",modulation_factor);
+  node_handle.getParam("/first_controller/epsE",epsE);
+  node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);

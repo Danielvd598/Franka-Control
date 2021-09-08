@@ -69,17 +69,21 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int control_state; 
   int modulation_counter; // counts how long the stiffness is modulated
   size_t nDoF, optimisation_length; 
-  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic;
+  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
+  use_dynamic_injection;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, dataAnalysis_tau_TB_path,
   dataAnalysis_tau_TF_path, dataAnalysis_dq_path, dataAnalysis_q_path, 
   dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path;
   double kt, ko, b; //impedance control paramaters
+  double bdrain; //drainage damping
+  double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
   double cycle_wait_period; //how long the programm should wait before repeating task [ms]
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
   double modulation_factor; //adjusting the slope of the modulated stiffness
+  Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
