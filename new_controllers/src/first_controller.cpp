@@ -104,7 +104,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
 
   control_state = 0;
-  nDoF = 7;
+  Njoints = 7;
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
@@ -179,14 +179,14 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     while (inFile >> num){
       tau_TB_index.push_back(num);
     }
-    for(size_t i=0;i<tau_TB_index.size()/nDoF;i++){
+    for(size_t i=0;i<tau_TB_index.size()/Njoints;i++){
       tau_TB_mat.conservativeResize(7,i+1);
-      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/nDoF+i], 
-                          tau_TB_index[2*tau_TB_index.size()/nDoF+i],
-                          tau_TB_index[3*tau_TB_index.size()/nDoF+i], 
-                          tau_TB_index[4*tau_TB_index.size()/nDoF+i], 
-                          tau_TB_index[5*tau_TB_index.size()/nDoF+i],
-                          tau_TB_index[6*tau_TB_index.size()/nDoF+i]; 
+      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/Njoints+i], 
+                          tau_TB_index[2*tau_TB_index.size()/Njoints+i],
+                          tau_TB_index[3*tau_TB_index.size()/Njoints+i], 
+                          tau_TB_index[4*tau_TB_index.size()/Njoints+i], 
+                          tau_TB_index[5*tau_TB_index.size()/Njoints+i],
+                          tau_TB_index[6*tau_TB_index.size()/Njoints+i]; 
     } 
     inFile.close();
 
@@ -252,12 +252,14 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   inFile.close();
   t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3];
 
+
+
   trajectory_state = 0;
   modulation_counter = 0;
   update_calls = 0;  
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
-  optimisation_length = tau_TB_mat.size()/nDoF;
+  optimisation_length = tau_TB_mat.size()/Njoints;
   return true;
 }
 
@@ -326,34 +328,34 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
 
  //assign twist via for loop because I don't know how to get struct from function
-  for(size_t i=0;i<nDoF;i++){
+  for(size_t i=0;i<Njoints;i++){
       switch (i)
       {
       case 0:
         T1 = Brockett_p[i].Twist;
         break;
       case 1:
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T2 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 2:
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T3 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 3: 
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T4 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 4:
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T5 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 5:
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T6 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       case 6:
-        Hi0 = Brockett(q,Brockett_p,nDoF,i-1);
+        Hi0 = Brockett(q,Brockett_p,Njoints,i-1);
         T7 = Adjoint(Hi0.H0) * Brockett_p[i].Twist;
         break;
       default:
@@ -465,7 +467,7 @@ void FirstController::update(const ros::Time& /*time*/,
   } 
   if(control_state==1){
     Eigen::Matrix<double, 7, 1> P_action;
-    for (size_t i=0;i<nDoF; i++)
+    for (size_t i=0;i<Njoints; i++)
     {
       P_action[i] = std::abs(kp/dq[i]);
       tau_cmd[i] = P_action[i] * (qi[i]-q[i]) + kd*(-dq[i]); //Joint space control
