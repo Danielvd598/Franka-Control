@@ -18,23 +18,23 @@ first_controller:
     theta: 0
     psi: 0
     phi: 3.1415
-    accuracy_thr: 0.03 #[m]
+    accuracy_thr: 0.02 #[m]
     modulation_factor: 0.5
     TaskBased: true
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_cyclic: false #bool for using completing the trajectory repetivily 
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V4_fix_opt_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V4_fix_opt_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V4_fix_opt_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V4_fix_opt_t_flag.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_t_flag.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
-    dataPrint: true
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V4_4_fix_opt_tau_desired.txt'
+    dataPrint: false
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_opt_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_opt_tau_desired.txt'
