@@ -252,14 +252,25 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   inFile.close();
   t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3];
 
-
-
   trajectory_state = 0;
   modulation_counter = 0;
   update_calls = 0;  
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
   optimisation_length = tau_TB_mat.size()/Njoints;
+  for (size_t i=0;i<Njoints;i++){
+    for (size_t j=0;j<optimisation_length;j++){
+      P_opt.conservativeResize(7,j+1);
+      P_opt(i,j) = std::abs(tau_TB_mat(i,j)  ); // THIS IS INCORRECT NEEDS STATES 
+    }
+  }
+
+  Etank = 0.001 * P_opt.rowwise().sum();
+  if(use_dynamic_injection){
+    Etank = epsE * Etank;
+  }
+  std::cout << "Initial energy tank level: \n" << Etank << std::endl;
+
   return true;
 }
 
@@ -441,6 +452,9 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_d[6] = -2; 
   }
 
+  // Safety
+  // fill the tanks
+
   //determine control_state
   if(use_optimisation){
     if(control_state!=2){
@@ -474,7 +488,7 @@ void FirstController::update(const ros::Time& /*time*/,
     }
     std::cout << "joint error: \n" << qi-q << std::endl;
   }
- 
+
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
   //export data for analysis

@@ -65,6 +65,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * control_state = 0: initialising
    * control_state = 1: joint space PD control
    * control_state = 2: Cartesian space TB+TF impedance control
+   * control_state = 3: draining kinetic energy
+   * control_state = 4: compliance
    * */
   int control_state; 
   int modulation_counter; // counts how long the stiffness is modulated
@@ -102,6 +104,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   size_t update_calls;
   std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt; //Power consumption based on optimisation
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured, dataAnalysis_tau_desired;
 
