@@ -38,7 +38,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * gripper_flag: 2 - release
    * ***/
   int gripper_flag;
-
+  
  private:
  // Saturation
   Eigen::Matrix<double, 7, 1> saturateTorqueRate(
@@ -52,6 +52,13 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 7, 1> tau_ext_initial_;
   Eigen::Matrix<double, 7, 1> tau_error_;
   static constexpr double kDeltaTauMax{1.0};
+
+  /***
+   * gripper_status: 1 - initial opening completed
+   * gripper_status: 2 - grabbed
+   * gripper_status: 3 - released
+   * ***/
+  Eigen::Matrix<double, Eigen::Dynamic, 1>  gripper_status;
 
   /**
    * trajectory_state = 0: homing above peg
@@ -101,7 +108,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 4, 1> t_flag; //flags concerning the trajectory phases
   std::ifstream inFile;
   double num;
-  size_t update_calls;
+  size_t update_calls; //Task-Based and trajectory indices
+  size_t gripper_calls; //how often the gripper is called to do something
   std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat;
   Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt; //Power consumption based on optimisation

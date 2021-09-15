@@ -255,6 +255,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   trajectory_state = 0;
   modulation_counter = 0;
   update_calls = 0;  
+  gripper_calls = 0;
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
   optimisation_length = tau_TB_mat.size()/Njoints;
@@ -461,7 +462,7 @@ void FirstController::update(const ros::Time& /*time*/,
       for (size_t i=0;i<q.size();i++)
       {
         double error = qi[i]-q[i];
-        if(std::abs(error)>0.0005){
+        if(std::abs(error)>0.001){
           std::cout << "\n Error is not small enough, error: \n" << 
           error << "\n joint #: \n" << i << std::endl;
           control_state = 1;
@@ -508,20 +509,33 @@ void FirstController::update(const ros::Time& /*time*/,
 
   // determine gripper flag value
   if (use_optimisation){
-    if (update_calls <= t_flag[0]){
+    if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
       gripper_flag = 2; //make sure the gripper is open before grabbing
-    }
-    if (update_calls > t_flag[1]*1000 && update_calls < t_flag[2]*1000 && 
+      ROS_INFO("Opening the gripper before grabbing action!");
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 1;
+    } else if(update_calls <= t_flag[0]*1000){ 
+        gripper_flag = 0;
+      }
+    if (update_calls > t_flag[0]*1000 && update_calls < t_flag[1]*1000 && 
     std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
-    std::abs(Hnv(2,3)) < accuracy_thr)
-    {
+    std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
       gripper_flag = 1; 
       ROS_INFO("grabbing!");
-    } 
-    if (update_calls > t_flag[3]*1000 && std::abs(Hnv(0,3)) < accuracy_thr
-    && std::abs(Hnv(1,3)) < accuracy_thr && std::abs(Hnv(2,3)) < accuracy_thr){
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 2;
+    } else if(update_calls > t_flag[0]*1000 && update_calls < t_flag[2]*1000){
+        gripper_flag = 0;
+      }
+    if (update_calls > t_flag[4]*1000 && std::abs(Hnv(0,3)) < accuracy_thr
+    && std::abs(Hnv(1,3)) < accuracy_thr && std::abs(Hnv(2,3)) < accuracy_thr
+    && gripper_status.size() < 1500){
       gripper_flag = 2;
       ROS_INFO("releasing!");
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 3;
+    } else if(update_calls > t_flag[2]*1000){
+      gripper_flag = 0;
     }
     if (update_calls > (t_flag[3]*1000 + cycle_wait_period) && gripper_flag == 2 && use_cyclic){
       ROS_INFO("completed task, returning to initial position and repeating task");
@@ -531,8 +545,19 @@ void FirstController::update(const ros::Time& /*time*/,
   }
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
-  gripper_flag_pub.publish(gripper_flag_msg);
 
+  // std::cout << "gripper_status: \n" <<gripper_status << std::endl;
+  // std::cout << "gripper_flag: \n" <<gripper_flag << std::endl;
+  // std::cout << "gripper_calls: \n" <<gripper_calls << std::endl;
+
+  // only publish gripper flag if releasing and grabbing, sleep for 1 seconds to complete action
+  if (gripper_flag != 0) {
+      ROS_INFO("Moving the gripper!");
+      gripper_flag_pub.publish(gripper_flag_msg);
+      gripper_calls++;
+  }
+
+  
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
@@ -545,13 +570,13 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  //std::cout << "update calls:\n " << update_calls << std::endl;
+  std::cout << "update calls:\n " << update_calls << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));
   }
 
-  if(control_state==2){
+  if(control_state==2 && gripper_flag == 0){
     update_calls++; //update function calls
   }
 }
