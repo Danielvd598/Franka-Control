@@ -65,7 +65,13 @@
         "dense": "cpp",
         "string": "cpp",
         "image": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "*.ipp": "cpp",
+        "bufferobject": "cpp",
+        "mixinvector": "cpp",
+        "texture": "cpp",
+        "buffered_value": "cpp",
+        "fast_back_stack": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -32,6 +32,7 @@ first_controller:
     Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_Hn0.txt'
     qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_q0.txt'
     t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_t_flag.txt'
+    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_qdot.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds

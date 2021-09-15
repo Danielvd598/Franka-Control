@@ -91,6 +91,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
   node_handle.getParam("/first_controller/t_flag_path", t_flag_path);
+  node_handle.getParam("/first_controller/qdot_path", qdot_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/cycle_wait_period", cycle_wait_period);
@@ -170,6 +171,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   //read torque data
   if(use_optimisation){
+    // read task-based torque data
     inFile.open(torque_path);
     if(!inFile) {
       std::cerr << "Unable to open torque txt file!";
@@ -187,6 +189,27 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
                           tau_TB_index[4*tau_TB_index.size()/Njoints+i], 
                           tau_TB_index[5*tau_TB_index.size()/Njoints+i],
                           tau_TB_index[6*tau_TB_index.size()/Njoints+i]; 
+    } 
+    inFile.close();
+
+    //read optimised joint velocities
+    inFile.open(qdot_path);
+    if(!inFile) {
+      std::cerr << "Unable to open qdot txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      qdot_index.push_back(num);
+    }
+    for(size_t i=0;i<qdot_index.size()/Njoints;i++){
+      qdot_mat.conservativeResize(7,i+1);
+      qdot_mat.col(i) << qdot_index[i], qdot_index[qdot_index.size()/Njoints+i], 
+                         qdot_index[2*qdot_index.size()/Njoints+i],
+                          qdot_index[3*qdot_index.size()/Njoints+i], 
+                          qdot_index[4*qdot_index.size()/Njoints+i], 
+                          qdot_index[5*qdot_index.size()/Njoints+i],
+                          qdot_index[6*qdot_index.size()/Njoints+i]; 
     } 
     inFile.close();
 
