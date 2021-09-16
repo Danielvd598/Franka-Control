@@ -169,6 +169,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[4].H0 = H50_0; Brockett_p[5].H0 = H60_0;
   Brockett_p[6].H0 = H70_0;
 
+  // read the optimisation data
   //read torque data
   if(use_optimisation){
     // read task-based torque data
@@ -181,14 +182,17 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     while (inFile >> num){
       tau_TB_index.push_back(num);
     }
-    for(size_t i=0;i<tau_TB_index.size()/Njoints;i++){
+    // determine the total length of the optimisation
+    optimisation_length = tau_TB_index.size()/Njoints;
+    std::cout << "total optimisation length [ms]: " << optimisation_length << std::endl;
+    for(size_t i=0;i<optimisation_length;i++){
       tau_TB_mat.conservativeResize(7,i+1);
-      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[tau_TB_index.size()/Njoints+i], 
-                          tau_TB_index[2*tau_TB_index.size()/Njoints+i],
-                          tau_TB_index[3*tau_TB_index.size()/Njoints+i], 
-                          tau_TB_index[4*tau_TB_index.size()/Njoints+i], 
-                          tau_TB_index[5*tau_TB_index.size()/Njoints+i],
-                          tau_TB_index[6*tau_TB_index.size()/Njoints+i]; 
+      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
+                           tau_TB_index[2*optimisation_length+i],
+                           tau_TB_index[3*optimisation_length+i], 
+                           tau_TB_index[4*optimisation_length+i], 
+                           tau_TB_index[5*optimisation_length+i],
+                           tau_TB_index[6*optimisation_length+i]; 
     } 
     inFile.close();
 
@@ -202,14 +206,15 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     while (inFile >> num){
       qdot_index.push_back(num);
     }
-    for(size_t i=0;i<qdot_index.size()/Njoints;i++){
-      qdot_mat.conservativeResize(7,i+1);
-      qdot_mat.col(i) << qdot_index[i], qdot_index[qdot_index.size()/Njoints+i], 
-                         qdot_index[2*qdot_index.size()/Njoints+i],
-                          qdot_index[3*qdot_index.size()/Njoints+i], 
-                          qdot_index[4*qdot_index.size()/Njoints+i], 
-                          qdot_index[5*qdot_index.size()/Njoints+i],
-                          qdot_index[6*qdot_index.size()/Njoints+i]; 
+    qdot_mat.conservativeResize(7,qdot_index.size()/Njoints);
+    for(size_t i=0;i<optimisation_length;i++){
+      
+      qdot_mat.col(i) << qdot_index[i],qdot_index[optimisation_length+i], 
+                         qdot_index[2*optimisation_length+i],
+                         qdot_index[3*optimisation_length+i], 
+                         qdot_index[4*optimisation_length+i], 
+                         qdot_index[5*optimisation_length+i],
+                         qdot_index[6*optimisation_length+i]; 
     } 
     inFile.close();
 
@@ -237,20 +242,20 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     inFile.close();
     qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
 
-    Hv0_matrices = new Hv0_struct [Hv0_index.size()/12]; //create new structure with initialized size
-    for(size_t i=0;i<Hv0_index.size()/12;i++){
+    Hv0_matrices = new Hv0_struct [optimisation_length]; //create new structure with initialized size
+    for(size_t i=0;i<optimisation_length;i++){
       Hv0_optimised << Hv0_index[i], 
-                      Hv0_index[Hv0_index.size()/12+i], 
-                      Hv0_index[2*Hv0_index.size()/12+i], 
-                      Hv0_index[9*Hv0_index.size()/12+i], //Hv0(1,4)
-                      Hv0_index[3*Hv0_index.size()/12+i],
-                      Hv0_index[4*Hv0_index.size()/12+i],
-                      Hv0_index[5*Hv0_index.size()/12+i],
-                      Hv0_index[10*Hv0_index.size()/12+i], //Hv0(2,4)
-                      Hv0_index[6*Hv0_index.size()/12+i],
-                      Hv0_index[7*Hv0_index.size()/12+i],
-                      Hv0_index[8*Hv0_index.size()/12+i],
-                      Hv0_index[11*Hv0_index.size()/12+i], //Hv0(3,4)
+                      Hv0_index[optimisation_length+i], 
+                      Hv0_index[2*optimisation_length+i], 
+                      Hv0_index[9*optimisation_length+i], //Hv0(1,4)
+                      Hv0_index[3*optimisation_length+i],
+                      Hv0_index[4*optimisation_length+i],
+                      Hv0_index[5*optimisation_length+i],
+                      Hv0_index[10*optimisation_length+i], //Hv0(2,4)
+                      Hv0_index[6*optimisation_length+i],
+                      Hv0_index[7*optimisation_length+i],
+                      Hv0_index[8*optimisation_length+i],
+                      Hv0_index[11*optimisation_length+i], //Hv0(3,4)
                       0,0,0,1;
       Hv0_matrices[i].H = Hv0_optimised;
     } 
@@ -273,7 +278,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       t_flag_index.push_back(num);
     }
   inFile.close();
-  t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3];
+  t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3],
+            t_flag_index[4], t_flag_index[5];
 
   trajectory_state = 0;
   modulation_counter = 0;
@@ -281,11 +287,11 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   gripper_calls = 0;
   gripper_flag = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
-  optimisation_length = tau_TB_mat.size()/Njoints;
+  P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
     for (size_t j=0;j<optimisation_length;j++){
-      P_opt.conservativeResize(7,j+1);
-      P_opt(i,j) = std::abs(tau_TB_mat(i,j)  ); // THIS IS INCORRECT NEEDS STATES 
+      P_opt(i,j) = std::abs(qdot_mat(i,j) ); // THIS IS INCORRECT NEEDS STATES 
+     // if(i == 0){      std::cout << "P_opt(i,j): \n" << j << ":" << qdot_mat(i,j) << std::endl; }
     }
   }
 
@@ -294,6 +300,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     Etank = epsE * Etank;
   }
   std::cout << "Initial energy tank level: \n" << Etank << std::endl;
+  std::cout << "The trajectory flags are at t = \n" << t_flag << std::endl;
+  
 
   return true;
 }
@@ -537,12 +545,12 @@ void FirstController::update(const ros::Time& /*time*/,
       ROS_INFO("Opening the gripper before grabbing action!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 1;
-    } else if(update_calls <= t_flag[0]*1000){ 
+    } else if(update_calls < t_flag[0]*1000){ 
         gripper_flag = 0;
       }
     if (update_calls > t_flag[0]*1000 && update_calls < t_flag[1]*1000 && 
-    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
-    std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
+        std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
+        std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
       gripper_flag = 1; 
       ROS_INFO("grabbing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
@@ -550,7 +558,7 @@ void FirstController::update(const ros::Time& /*time*/,
     } else if(update_calls > t_flag[0]*1000 && update_calls < t_flag[2]*1000){
         gripper_flag = 0;
       }
-    if (update_calls > t_flag[4]*1000 && std::abs(Hnv(0,3)) < accuracy_thr
+    if (update_calls > (t_flag[4]*1000 + 4000) && std::abs(Hnv(0,3)) < accuracy_thr
     && std::abs(Hnv(1,3)) < accuracy_thr && std::abs(Hnv(2,3)) < accuracy_thr
     && gripper_status.size() < 1500){
       gripper_flag = 2;
@@ -560,7 +568,7 @@ void FirstController::update(const ros::Time& /*time*/,
     } else if(update_calls > t_flag[2]*1000){
       gripper_flag = 0;
     }
-    if (update_calls > (t_flag[3]*1000 + cycle_wait_period) && gripper_flag == 2 && use_cyclic){
+    if (update_calls > (t_flag[4]*1000 + cycle_wait_period) && use_cyclic){
       ROS_INFO("completed task, returning to initial position and repeating task");
       control_state = 1; 
       update_calls = 0;
@@ -594,6 +602,7 @@ void FirstController::update(const ros::Time& /*time*/,
   std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   std::cout << "update calls:\n " << update_calls << std::endl;
+  //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));

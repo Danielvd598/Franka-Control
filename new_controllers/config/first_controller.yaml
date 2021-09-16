@@ -20,26 +20,26 @@ first_controller:
     psi: 0
     phi: 3.1415
     accuracy_thr: 0.01 #[m]
-    modulation_factor: 10.0
+    modulation_factor: 6.0
     epsP: 50.1 #Power margin for collision detection [W]
-    epsE: 50.025 #Energy margin in the tanks, this value is a % of the total expected energy spend
-    TaskBased: false #wether or not we want to include feed-forward 
+    epsE: 1 #Energy margin in the tanks, this value is a % of the total expected energy spend
+    TaskBased: true #wether or not we want to include feed-forward 
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_cyclic: false #bool for using completing the trajectory repetivily 
     use_dynamic_injection: true #bool for dynamically injection energy in the energy tanks
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_t_flag.txt'
-    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V10_var_qdot.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_t_flag.txt'
+    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_qdot.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
     dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_opt_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V7_var_opt_tau_desired.txt'
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_fix_opt_tau_desired.txt'

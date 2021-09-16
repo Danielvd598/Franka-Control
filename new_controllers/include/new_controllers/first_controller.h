@@ -105,7 +105,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
   Eigen::Matrix<double, 7, 1> qi; //initial desired joint positions
-  Eigen::Matrix<double, 4, 1> t_flag; //flags concerning the trajectory phases
+  Eigen::Matrix<double, 6, 1> t_flag; //flags concerning the trajectory phases
   std::ifstream inFile;
   double num;
   size_t update_calls; //Task-Based and trajectory indices
