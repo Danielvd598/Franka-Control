@@ -94,6 +94,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
   double modulation_factor; //adjusting the slope of the modulated stiffness
+  ros::WallTime t1, t2; //timer between collision detection and energy draining
   Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;

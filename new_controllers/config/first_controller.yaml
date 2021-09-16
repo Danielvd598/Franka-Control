@@ -12,7 +12,7 @@ first_controller:
     kt: 100
     ko: 100
     b: 2
-    bdrain: 2.0 #drainage damping
+    bdrain: 40.0 #drainage damping
     xd: 0.5
     yd: 0.0
     zd: 0.1
@@ -23,7 +23,7 @@ first_controller:
     modulation_factor: 6.0
     epsP: 50.1 #Power margin for collision detection [W]
     epsE: 501 #Energy margin in the tanks, this value is a % of the total expected energy spend
-    Ek_drained: 1 #maximum kinetic energy of the robot when it is assumed to be drained
+    Ek_drained: 0.001 #maximum kinetic energy of the robot when it is assumed to be drained
     TaskBased: true #wether or not we want to include feed-forward 
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness

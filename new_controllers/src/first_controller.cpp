@@ -496,16 +496,21 @@ void FirstController::update(const ros::Time& /*time*/,
       // empty the tanks based on measured torque and joint velocities
       Etank(i) = Etank(i) - P_meas(i);
       //check if a tank is empty
-      if(Etank(i) <= 0){
+      if(Etank(i) <= 0 && !fail){
         fail = true;
         ROS_WARN("Energy tank of joint %f is empty!",(i+1));
+        t1 = ros::WallTime::now();
       }
     }
   }
   if(fail){
     Ek = dq.transpose()*mass*dq; //calculate current kinetic energy
-    if (Ek < Ek_drained){
+    if (Ek < Ek_drained && !drained){
       drained = true;
+      t2 = ros::WallTime::now();
+      double drainage_time = (t2 - t1).toSec();
+      ROS_WARN("Energy drained, system is compliant!");
+      ROS_INFO_STREAM("\nDrainage time (s): " << drainage_time);
     }
   }
 
@@ -552,7 +557,6 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_cmd = -bdrain * dq;// draining the kinetic energy of the system
   }
   if(control_state==4){
-    ROS_WARN("Energy drained, system is compliant!");
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
 
