@@ -184,9 +184,9 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
     // determine the total length of the optimisation
     optimisation_length = tau_TB_index.size()/Njoints;
+    tau_TB_mat.conservativeResize(7,optimisation_length);
     std::cout << "total optimisation length [ms]: " << optimisation_length << std::endl;
-    for(size_t i=0;i<optimisation_length;i++){
-      tau_TB_mat.conservativeResize(7,i+1);
+    for(size_t i=0;i<optimisation_length;i++){   
       tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
                            tau_TB_index[2*optimisation_length+i],
                            tau_TB_index[3*optimisation_length+i], 
@@ -206,15 +206,14 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     while (inFile >> num){
       qdot_index.push_back(num);
     }
-    qdot_mat.conservativeResize(7,qdot_index.size()/Njoints);
-    for(size_t i=0;i<optimisation_length;i++){
-      
-      qdot_mat.col(i) << qdot_index[i],qdot_index[optimisation_length+i], 
-                         qdot_index[2*optimisation_length+i],
-                         qdot_index[3*optimisation_length+i], 
-                         qdot_index[4*optimisation_length+i], 
-                         qdot_index[5*optimisation_length+i],
-                         qdot_index[6*optimisation_length+i]; 
+    qdot_mat.conservativeResize(7,optimisation_length);
+    for(size_t i=0;i<(optimisation_length-1)*Njoints;i=i+Njoints){
+      qdot_mat.col(i/Njoints) << qdot_index[i],qdot_index[i+1], 
+                         qdot_index[i+2],
+                         qdot_index[i+3], 
+                         qdot_index[i+4], 
+                         qdot_index[i+5],
+                         qdot_index[i+6]; 
     } 
     inFile.close();
 
@@ -290,8 +289,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
     for (size_t j=0;j<optimisation_length;j++){
-      P_opt(i,j) = std::abs(qdot_mat(i,j) ); // THIS IS INCORRECT NEEDS STATES 
-     // if(i == 0){      std::cout << "P_opt(i,j): \n" << j << ":" << qdot_mat(i,j) << std::endl; }
+      P_opt(i,j) = std::abs(tau_TB_mat(i,j) * qdot_mat(i,j)); // THIS IS INCORRECT NEEDS STATES 
     }
   }
 
@@ -301,7 +299,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   }
   std::cout << "Initial energy tank level: \n" << Etank << std::endl;
   std::cout << "The trajectory flags are at t = \n" << t_flag << std::endl;
-  
 
   return true;
 }
