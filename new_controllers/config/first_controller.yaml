@@ -22,7 +22,8 @@ first_controller:
     accuracy_thr: 0.01 #[m]
     modulation_factor: 6.0
     epsP: 50.1 #Power margin for collision detection [W]
-    epsE: 1 #Energy margin in the tanks, this value is a % of the total expected energy spend
+    epsE: 501 #Energy margin in the tanks, this value is a % of the total expected energy spend
+    Ek_drained: 1 #maximum kinetic energy of the robot when it is assumed to be drained
     TaskBased: true #wether or not we want to include feed-forward 
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness

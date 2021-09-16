@@ -87,6 +87,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/modulation_factor",modulation_factor);
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
+  node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
@@ -285,6 +286,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   update_calls = 0;  
   gripper_calls = 0;
   gripper_flag = 0;
+  fail = 0;
+  drained = 0;
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
   P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
@@ -295,8 +298,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
 
   Etank = 0.001 * P_opt.rowwise().sum();
   if(use_dynamic_injection){
-    Etank = epsE * Etank;
-  }
+    Etank = Etank*epsE;
+  } else Etank = Etank + epsE*Etank;
   std::cout << "Initial energy tank level: \n" << Etank << std::endl;
   std::cout << "The trajectory flags are at t = \n" << t_flag << std::endl;
 
@@ -347,6 +350,8 @@ void FirstController::update(const ros::Time& /*time*/,
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
   std::array<double, 7> gravity_array = model_handle_->getGravity();
+  std::array<double, 49>  mass_array = model_handle_->getMass();
+  Eigen::Map<Eigen::Matrix<double, 7, 7> > mass(mass_array.data());
 
   Eigen::Map<Eigen::Matrix<double, 6, 7> > jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > tau_measured(robot_state.tau_J.data());
@@ -481,12 +486,32 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_d[6] = -2; 
   }
 
-  // Safety
-  // fill the tanks
+  // // Safety
+  if (control_state==2 && gripper_flag == 0){// only update when performing trajectory
+    for (size_t i=0;i<Njoints;i++){
+      P_meas(i) = tau_measured(i) * dq(i); // calculate measured mechanical power
+      if(use_dynamic_injection){
+        Etank(i) = Etank(i) + P_opt(i,update_calls);   // fill the tanks
+      } 
+      // empty the tanks based on measured torque and joint velocities
+      Etank(i) = Etank(i) - P_meas(i);
+      //check if a tank is empty
+      if(Etank(i) <= 0){
+        fail = true;
+        ROS_WARN("Energy tank of joint %f is empty!",(i+1));
+      }
+    }
+  }
+  if(fail){
+    Ek = dq.transpose()*mass*dq; //calculate current kinetic energy
+    if (Ek < Ek_drained){
+      drained = true;
+    }
+  }
 
   //determine control_state
   if(use_optimisation){
-    if(control_state!=2){
+    if(control_state!=2 && control_state!=3 && control_state!=4){ //only do at start
       for (size_t i=0;i<q.size();i++)
       {
         double error = qi[i]-q[i];
@@ -502,6 +527,11 @@ void FirstController::update(const ros::Time& /*time*/,
         }
       }
     }
+    if(fail && !drained){
+      control_state = 3;
+    } else if(fail && drained){
+      control_state = 4;
+    }
   } else control_state = 2;
 
   //set torque command based on the control state
@@ -516,6 +546,14 @@ void FirstController::update(const ros::Time& /*time*/,
       tau_cmd[i] = P_action[i] * (qi[i]-q[i]) + kd*(-dq[i]); //Joint space control
     }
     std::cout << "joint error: \n" << qi-q << std::endl;
+  }
+  if(control_state==3){ 
+    ROS_WARN("Trajectory failed, draining the kinetic energy!");
+    tau_cmd = -bdrain * dq;// draining the kinetic energy of the system
+  }
+  if(control_state==4){
+    ROS_WARN("Energy drained, system is compliant!");
+    tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
@@ -584,7 +622,6 @@ void FirstController::update(const ros::Time& /*time*/,
       gripper_flag_pub.publish(gripper_flag_msg);
       gripper_calls++;
   }
-
   
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_d: \n" << tau_d << std::endl;
@@ -596,10 +633,12 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+  //std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  std::cout << "update calls:\n " << update_calls << std::endl;
+  //std::cout << "update calls:\n " << update_calls << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
+  //std::cout << "Energy Tank levels: \n" << Etank << std::endl;
+  //std::cout << "Control state: \n" << control_state << std::endl;
 
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_cmd(i));

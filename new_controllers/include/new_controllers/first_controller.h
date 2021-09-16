@@ -79,13 +79,15 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
-  use_dynamic_injection;
+  use_dynamic_injection, fail, drained;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, 
   dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path;
   double kt, ko, b; //impedance control paramaters
   double bdrain; //drainage damping
   double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
+  double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
+  double Ek; //current total kinetic energy of the robot
   double cycle_wait_period; //how long the programm should wait before repeating task [ms]
   double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
@@ -105,6 +107,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 6, 1> T210, T320, T430, T540, T650, T760;
   Eigen::Matrix<double, 4, 4> H10_0, H20_0, H30_0, H40_0, H50_0, H60_0, H70_0; 
   Eigen::Matrix<double, 7, 1> qi; //initial desired joint positions
+  Eigen::Matrix<double, 7, 1> P_meas; //measured power
   Eigen::Matrix<double, 6, 1> t_flag; //flags concerning the trajectory phases
   std::ifstream inFile;
   double num;
