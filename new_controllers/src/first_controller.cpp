@@ -93,6 +93,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/qi_path", qi_path);
   node_handle.getParam("/first_controller/t_flag_path", t_flag_path);
   node_handle.getParam("/first_controller/qdot_path", qdot_path);
+  node_handle.getParam("/first_controller/tauc_gravity_path", tauc_gravity_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/cycle_wait_period", cycle_wait_period);
@@ -197,6 +198,28 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     } 
     inFile.close();
 
+    // read task-based torque data including gravity
+    inFile.open(tauc_gravity_path);
+    if(!inFile) {
+      std::cerr << "Unable to open torque gravity txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while (inFile >> num){
+      tauc_gravity_index.push_back(num);
+    }
+    tauc_gravity_mat.conservativeResize(7,optimisation_length);
+    std::cout << "total optimisation length [ms]: " << optimisation_length << std::endl;
+    for(size_t i=0;i<optimisation_length;i++){   
+      tauc_gravity_mat.col(i) << tauc_gravity_index[i], tauc_gravity_index[optimisation_length+i], 
+                           tauc_gravity_index[2*optimisation_length+i],
+                           tauc_gravity_index[3*optimisation_length+i], 
+                           tauc_gravity_index[4*optimisation_length+i], 
+                           tauc_gravity_index[5*optimisation_length+i],
+                           tauc_gravity_index[6*optimisation_length+i]; 
+    } 
+    inFile.close();
+
     //read optimised joint velocities
     inFile.open(qdot_path);
     if(!inFile) {
@@ -292,7 +315,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
     for (size_t j=0;j<optimisation_length;j++){
-      P_opt(i,j) = std::abs(tau_TB_mat(i,j) * qdot_mat(i,j)); // THIS IS INCORRECT NEEDS STATES 
+      P_opt(i,j) = std::abs(tauc_gravity_mat(i,j) * qdot_mat(i,j)); // THIS IS INCORRECT NEEDS STATES 
     }
   }
 
@@ -559,6 +582,12 @@ void FirstController::update(const ros::Time& /*time*/,
   if(control_state==4){
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
+
+  //THIS IS ONLY USED FOR TESTING DOWNWARDS FORCE
+  // Wn << 0,0,0,0,0,-1;
+  // W0 = Adjoint(H0n).transpose() * Wn;
+  // tau_cmd = GeoJac.transpose() * W0;
+
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 

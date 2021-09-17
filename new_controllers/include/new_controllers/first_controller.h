@@ -80,7 +80,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   size_t Njoints, optimisation_length; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
   use_dynamic_injection, fail, drained;
-  std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, 
+  std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, tauc_gravity_path,
   dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path;
   double kt, ko, b; //impedance control paramaters
@@ -114,8 +114,9 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double num;
   size_t update_calls; //Task-Based and trajectory indices
   size_t gripper_calls; //how often the gripper is called to do something
-  std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index, qdot_index;
-  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat, qdot_mat;
+  std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index, qdot_index, 
+  tauc_gravity_index;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat, qdot_mat, tauc_gravity_mat;
   Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt; //Power consumption based on optimisation
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured, dataAnalysis_tau_desired;

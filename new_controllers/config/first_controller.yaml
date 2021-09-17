@@ -29,11 +29,12 @@ first_controller:
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_cyclic: false #bool for using completing the trajectory repetivily 
     use_dynamic_injection: true #bool for dynamically injection energy in the energy tanks
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_t_flag.txt'
-    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V11_fix_opt_qdot.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_t_flag.txt'
+    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_qdot.txt'
+    tauc_gravity_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V13_fix_opt_tauc_gravity.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
