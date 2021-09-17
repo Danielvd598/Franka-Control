@@ -584,7 +584,7 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   //THIS IS ONLY USED FOR TESTING DOWNWARDS FORCE
-  // Wn << 0,0,0,0,0,-1;
+  // Wn << 0,0,0,0,0,12;
   // W0 = Adjoint(H0n).transpose() * Wn;
   // tau_cmd = GeoJac.transpose() * W0;
 
@@ -616,7 +616,7 @@ void FirstController::update(const ros::Time& /*time*/,
     } else if(update_calls < t_flag[0]*1000){ 
         gripper_flag = 0;
       }
-    if (update_calls > t_flag[0]*1000 && update_calls < t_flag[1]*1000 && 
+    if (update_calls == static_cast<int>(t_flag[1]*1000) && 
         std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
         std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
       gripper_flag = 1; 
@@ -626,9 +626,9 @@ void FirstController::update(const ros::Time& /*time*/,
     } else if(update_calls > t_flag[0]*1000 && update_calls < t_flag[2]*1000){
         gripper_flag = 0;
       }
-    if (update_calls > (t_flag[4]*1000 + 4000) && std::abs(Hnv(0,3)) < accuracy_thr
-    && std::abs(Hnv(1,3)) < accuracy_thr && std::abs(Hnv(2,3)) < accuracy_thr
-    && gripper_status.size() < 1500){
+    if (update_calls ==  static_cast<int>(t_flag[5]*1000)) && 
+    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
+    && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
       gripper_flag = 2;
       ROS_INFO("releasing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
@@ -642,6 +642,9 @@ void FirstController::update(const ros::Time& /*time*/,
       update_calls = 0;
     }
   }
+
+  //gripper_flag = 1;
+
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
 
@@ -666,9 +669,9 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  //std::cout << "Hnv: \n" << Hnv << std::endl;
+  std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  //std::cout << "update calls:\n " << update_calls << std::endl;
+  std::cout << "update calls:\n " << update_calls << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
   //std::cout << "Energy Tank levels: \n" << Etank << std::endl;
   //std::cout << "Control state: \n" << control_state << std::endl;
@@ -679,6 +682,10 @@ void FirstController::update(const ros::Time& /*time*/,
 
   if(control_state==2 && gripper_flag == 0){
     update_calls++; //update function calls
+    // if (gripper_status.size() == 1000 && update_calls < t_flag(2)/s.Ts ){
+    //   update_calls = t_flag(2)*1000; //if the peg is grabbed, go the next trajectory
+    // }
+
   }
 }
 
