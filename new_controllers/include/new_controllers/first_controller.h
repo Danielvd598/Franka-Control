@@ -54,9 +54,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
   static constexpr double kDeltaTauMax{1.0};
 
   /***
-   * gripper_status: 1 - initial opening completed
-   * gripper_status: 2 - grabbed
-   * gripper_status: 3 - released
+   * gripper_status: filling this array makes sure that the gripper action is completed 
+   * for a sudden amount of time
    * ***/
   Eigen::Matrix<double, Eigen::Dynamic, 1>  gripper_status;
 
@@ -69,6 +68,12 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int trajectory_state; 
   
   /**
+   * accuracy_flag = 0: wait before continuing to next flag
+   * accuracy_flag = 1: accurate enough to continue trajectory
+   * **/
+  int accuracy_flag;
+
+  /**
    * control_state = 0: initialising
    * control_state = 1: joint space PD control
    * control_state = 2: Cartesian space TB+TF impedance control
@@ -76,7 +81,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * control_state = 4: compliance
    * */
   int control_state; 
-  int modulation_counter; // counts how long the stiffness is modulated
+  int ko_modulation_counter, kt_modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
   use_dynamic_injection, fail, drained;
@@ -93,7 +98,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
-  double modulation_factor; //adjusting the slope of the modulated stiffness
+  double kt_modulation_factor, ko_modulation_factor, ktmax, komax; //adjusting modulated stiffness
   ros::WallTime t1, t2; //timer between collision detection and energy draining
   Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;

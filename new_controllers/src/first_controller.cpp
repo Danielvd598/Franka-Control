@@ -84,7 +84,10 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/psi",psi);
   node_handle.getParam("/first_controller/theta",theta);
   node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
-  node_handle.getParam("/first_controller/modulation_factor",modulation_factor);
+  node_handle.getParam("/first_controller/ko_modulation_factor",ko_modulation_factor);
+  node_handle.getParam("/first_controller/kt_modulation_factor",kt_modulation_factor);
+  node_handle.getParam("/first_controller/ktmax",ktmax);
+  node_handle.getParam("/first_controller/komax",komax);
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
@@ -305,8 +308,9 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
             t_flag_index[4], t_flag_index[5];
 
   trajectory_state = 0;
-  modulation_counter = 0;
-  update_calls = 0;  
+  ko_modulation_counter = 0;
+  kt_modulation_counter = 0;
+  update_calls = 0;
   gripper_calls = 0;
   gripper_flag = 0;
   fail = 0;
@@ -468,20 +472,24 @@ void FirstController::update(const ros::Time& /*time*/,
 //will have sudden jumps
   if(use_modulated_TF){
     if ((dq.array() < 0.1).all() && control_state == 2 && gripper_flag == 0){
-      if(modulation_counter < 3000) { //put an upper limit on the maximum stiffness
-        modulation_counter++;
+      if(Kt(1,1) < ktmax) { //put an upper limit on the maximum stiffness
+        kt_modulation_counter++;
       }
-      Ko << ko+modulation_factor*modulation_counter, 0, 0,
-            0, ko+modulation_factor*modulation_counter, 0,
-            0, 0, ko+modulation_factor*modulation_counter;
-      Kt << kt+modulation_factor*modulation_counter, 0, 0,
-            0, kt+modulation_factor*modulation_counter, 0,
-            0, 0, kt+modulation_factor*modulation_counter;
+      if(Ko(1,1) < komax) { //put an upper limit on the maximum stiffness
+        ko_modulation_counter++;
+      }
+      Ko << ko+ko_modulation_factor*ko_modulation_counter, 0, 0,
+            0, ko+ko_modulation_factor*ko_modulation_counter, 0,
+            0, 0, ko+ko_modulation_factor*ko_modulation_counter;
+      Kt << kt+kt_modulation_factor*kt_modulation_counter, 0, 0,
+            0, kt+kt_modulation_factor*kt_modulation_counter, 0,
+            0, 0, kt+kt_modulation_factor*kt_modulation_counter;
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
-    ROS_INFO("Modulating the stiffness! Current stiffness: %f",Ko(1,1));
+    ROS_INFO("Modulating the stiffness! Kt: %f, Ko: %f",Kt(1,1),Ko(1,1));
     } else { //reset to original stiffness and reset counter
-        modulation_counter = 0;
+        ko_modulation_counter = 0;
+        kt_modulation_counter = 0;
         Ko << ko, 0, 0,
               0, ko, 0,
               0, 0, ko;
@@ -656,7 +664,22 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
-  
+
+  for (size_t i = 0; i < 7; ++i) {
+    joint_handles_[i].setCommand(tau_cmd(i));
+  }
+
+  for (size_t i=0;i<t_flag.size();i++){
+    if (update_calls == static_cast<int>(t_flag[i]*1000) && 
+        (std::abs(Hnv(0,3)) > accuracy_thr || std::abs(Hnv(1,3)) > accuracy_thr ||
+         std::abs(Hnv(2,3)) > accuracy_thr)){
+        ROS_INFO("Accuracy is not sufficient enough at flag point!");
+        accuracy_flag = 0; 
+        break;
+    }
+    else accuracy_flag = 1;
+  }
+
   // std::cout << "gripper_status: \n" <<gripper_status << std::endl;
   // std::cout << "gripper_flag: \n" <<gripper_flag << std::endl;
   // std::cout << "gripper_calls: \n" <<gripper_calls << std::endl;
@@ -677,17 +700,10 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
   //std::cout << "Energy Tank levels: \n" << Etank << std::endl;
   //std::cout << "Control state: \n" << control_state << std::endl;
+  //std::cout << "Accuracy_flag: \n" << accuracy_flag << std::endl;
 
-  for (size_t i = 0; i < 7; ++i) {
-    joint_handles_[i].setCommand(tau_cmd(i));
-  }
-
-  if(control_state==2 && gripper_flag == 0){
+  if(control_state==2 && gripper_flag == 0 && accuracy_flag == 1){
     update_calls++; //update function calls
-    // if (gripper_status.size() == 1000 && update_calls < t_flag(2)/s.Ts ){
-    //   update_calls = t_flag(2)*1000; //if the peg is grabbed, go the next trajectory
-    // }
-
   }
 }
 
