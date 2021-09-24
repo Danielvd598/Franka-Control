@@ -464,8 +464,10 @@ void FirstController::update(const ros::Time& /*time*/,
             pnv(2), 0, -pnv(0),
             -pnv(1), pnv(0), 0;
 
+//only modulated stiffness when doing cartesian control, otherwise the torque commands
+//will have sudden jumps
   if(use_modulated_TF){
-    if ((dq.array() < 0.1).all()){
+    if ((dq.array() < 0.1).all() && control_state == 2 && gripper_flag == 0){
       if(modulation_counter < 3000) { //put an upper limit on the maximum stiffness
         modulation_counter++;
       }
@@ -477,6 +479,7 @@ void FirstController::update(const ros::Time& /*time*/,
             0, 0, kt+modulation_factor*modulation_counter;
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
+    ROS_INFO("Modulating the stiffness! Current stiffness: %f",Ko(1,1));
     } else { //reset to original stiffness and reset counter
         modulation_counter = 0;
         Ko << ko, 0, 0,
@@ -507,6 +510,54 @@ void FirstController::update(const ros::Time& /*time*/,
   }
   if(tau_d[6] < -2){
     tau_d[6] = -2; 
+  }
+
+  // determine gripper flag value
+  if (use_optimisation){
+    gripper_flag = 0; //doing nothing 
+    if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
+      gripper_flag = 2; //make sure the gripper is open before grabbing
+      ROS_INFO("Opening the gripper before grabbing action!");
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 1;
+    } 
+    if (update_calls == static_cast<int>(t_flag[1]*1000) && 
+        std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
+        std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
+      gripper_flag = 1; 
+      ROS_INFO("grabbing!");
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 2;
+    } else if (update_calls == static_cast<int>(t_flag[1]*1000)
+               && gripper_status.size() < 1000){
+      ROS_WARN("Failed to complete grabbing action, accuracy threshold not met!");
+    }
+    if (update_calls ==  static_cast<int>(t_flag[5]*1000) && 
+    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
+    && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
+      gripper_flag = 2;
+      ROS_INFO("releasing!");
+      gripper_status.conservativeResize(gripper_calls+1,1);
+      gripper_status.row(gripper_calls) << 3;
+    } else if (update_calls ==  static_cast<int>(t_flag[5]*1000 
+               && gripper_status.size() < 1500)){
+      ROS_WARN("Failed to complete releasing action, accuracy threshold not met!");
+    }
+    if (update_calls > (t_flag[4]*1000 + cycle_wait_period) && use_cyclic){
+      ROS_INFO("completed task, returning to initial position and repeating task");
+      control_state = 1; 
+      update_calls = 0;
+    }
+  }
+
+  std_msgs::Int16 gripper_flag_msg;
+  gripper_flag_msg.data = gripper_flag;
+
+  // only publish gripper flag if releasing and grabbing, sleep for 1 seconds to complete action
+  if (gripper_flag != 0) {
+      ROS_INFO("Moving the gripper!");
+      gripper_flag_pub.publish(gripper_flag_msg);
+      gripper_calls++;
   }
 
   // // Safety
@@ -579,7 +630,7 @@ void FirstController::update(const ros::Time& /*time*/,
     ROS_WARN("Trajectory failed, draining the kinetic energy!");
     tau_cmd = -bdrain * dq;// draining the kinetic energy of the system
   }
-  if(control_state==4){
+  if(control_state==4 || gripper_flag != 0){ //if gripper is moving don't send torque commands
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
 
@@ -605,60 +656,11 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
-
-  // determine gripper flag value
-  if (use_optimisation){
-    if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
-      gripper_flag = 2; //make sure the gripper is open before grabbing
-      ROS_INFO("Opening the gripper before grabbing action!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 1;
-    } else if(update_calls < t_flag[0]*1000){ 
-        gripper_flag = 0;
-      }
-    if (update_calls == static_cast<int>(t_flag[1]*1000) && 
-        std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
-        std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
-      gripper_flag = 1; 
-      ROS_INFO("grabbing!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 2;
-    } else if(update_calls > t_flag[0]*1000 && update_calls < t_flag[2]*1000){
-        gripper_flag = 0;
-      }
-    if (update_calls ==  static_cast<int>(t_flag[5]*1000)) && 
-    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
-    && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
-      gripper_flag = 2;
-      ROS_INFO("releasing!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 3;
-    } else if(update_calls > t_flag[2]*1000){
-      gripper_flag = 0;
-    }
-    if (update_calls > (t_flag[4]*1000 + cycle_wait_period) && use_cyclic){
-      ROS_INFO("completed task, returning to initial position and repeating task");
-      control_state = 1; 
-      update_calls = 0;
-    }
-  }
-
-  //gripper_flag = 1;
-
-  std_msgs::Int16 gripper_flag_msg;
-  gripper_flag_msg.data = gripper_flag;
-
+  
   // std::cout << "gripper_status: \n" <<gripper_status << std::endl;
   // std::cout << "gripper_flag: \n" <<gripper_flag << std::endl;
   // std::cout << "gripper_calls: \n" <<gripper_calls << std::endl;
 
-  // only publish gripper flag if releasing and grabbing, sleep for 1 seconds to complete action
-  if (gripper_flag != 0) {
-      ROS_INFO("Moving the gripper!");
-      gripper_flag_pub.publish(gripper_flag_msg);
-      gripper_calls++;
-  }
-  
   //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
   //std::cout << "tau_d: \n" << tau_d << std::endl;
   //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
