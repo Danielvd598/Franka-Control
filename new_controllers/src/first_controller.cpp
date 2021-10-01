@@ -471,7 +471,8 @@ void FirstController::update(const ros::Time& /*time*/,
 //only modulated stiffness when doing cartesian control, otherwise the torque commands
 //will have sudden jumps
   if(use_modulated_TF){
-    if ((dq.array() < 0.1).all() && control_state == 2 && gripper_flag == 0){
+    if ((dq.array() < 0.1).all() && (dq.array() > -0.1).all() 
+    && control_state == 2 && gripper_flag == 0){
       if(Kt(1,1) < ktmax) { //put an upper limit on the maximum stiffness
         kt_modulation_counter++;
       }
@@ -643,9 +644,10 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   //THIS IS ONLY USED FOR TESTING DOWNWARDS FORCE
-  // Wn << 0,0,0,0,0,12;
+  // Wn << 0,0,0,0,0,34;
   // W0 = Adjoint(H0n).transpose() * Wn;
   // tau_cmd = GeoJac.transpose() * W0;
+
 
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
