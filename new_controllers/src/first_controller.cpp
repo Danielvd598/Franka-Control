@@ -717,11 +717,11 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
   //std::cout << "q: \n" << q << std::endl;
-  //std::cout << "Hn0: \n" << Hn0 << std::endl;
+  std::cout << "Hn0: \n" << Hn0 << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
-  std::cout << "Hnv: \n" << Hnv << std::endl;
+ // std::cout << "Hnv: \n" << Hnv << std::endl;
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   std::cout << "update calls:\n " << update_calls << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
