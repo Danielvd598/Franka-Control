@@ -41,7 +41,7 @@ first_controller:
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
-    dataPrint: true
+    dataPrint: false
     dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_TB.txt'
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_TF.txt'
     dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_dq.txt'

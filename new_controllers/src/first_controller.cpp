@@ -552,8 +552,8 @@ void FirstController::update(const ros::Time& /*time*/,
       ROS_INFO("releasing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 3;
-    } else if (update_calls ==  static_cast<int>(t_flag[5]*1000 
-               && gripper_status.size() < 1500)){
+    } else if (update_calls ==  static_cast<int>(t_flag[5]*1000) 
+               && gripper_status.size() < 1500){
       ROS_WARN("Failed to complete releasing action, accuracy threshold not met!");
     }
     if (update_calls > (t_flag[4]*1000 + cycle_wait_period) && use_cyclic){
