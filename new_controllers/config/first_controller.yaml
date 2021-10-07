@@ -24,7 +24,7 @@ first_controller:
     ko_modulation_factor: 1.0
     ktmax: 4000 #maximumum allowable translational stiffness in case of modulating stiffness
     komax: 500 #maximumum allowable rotational stiffness in case of modulating stiffness
-    b_modulation_factor: 0.016
+    b_modulation_factor: 0.001
     bmax: 80
     epsP: 50.1 #Power margin for collision detection [W]
     epsE: 5010 #Energy margin in the tanks, this value is a % of the total expected energy spend
@@ -43,11 +43,11 @@ first_controller:
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
-    dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_tau_desired.txt'
-    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_4_var_xyz_ref.txt'
+    dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_tau_desired.txt'
+    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_5_var_xyz_ref.txt'
