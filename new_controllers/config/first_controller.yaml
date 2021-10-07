@@ -9,8 +9,8 @@ first_controller:
         - panda_joint5
         - panda_joint6
         - panda_joint7
-    kt: 400
-    ko: 400
+    kt: 100
+    ko: 100
     b: 2
     bdrain: 40.0 #drainage damping
     xd: 0.5
@@ -19,7 +19,7 @@ first_controller:
     theta: 0
     psi: 0
     phi: 3.1415
-    accuracy_thr: 0.025 #0.002 #[m]
+    accuracy_thr: 0.1 #0.002 #[m]
     kt_modulation_factor: 0 #8.0
     ko_modulation_factor: 0 #1.0
     ktmax: 4000 #maximumum allowable translational stiffness in case of modulating stiffness
