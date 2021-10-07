@@ -609,7 +609,7 @@ void FirstController::update(const ros::Time& /*time*/,
           control_state = 1;
           break;
         }
-        else {
+        else if(std::abs(error)<=0.001 && i == q.size()-1){
           std::cout << "\n Within limits, starting trajectory! \n" << std::endl;
           control_state = 2;
         }
