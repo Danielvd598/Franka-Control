@@ -81,7 +81,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * control_state = 4: compliance
    * */
   int control_state; 
-  int ko_modulation_counter, kt_modulation_counter; // counts how long the stiffness is modulated
+  int ko_modulation_counter, kt_modulation_counter, b_modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length; 
   bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
   use_dynamic_injection, fail, drained;
@@ -99,7 +99,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double kp, kd; //PD join space control parameters
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
-  double kt_modulation_factor, ko_modulation_factor, ktmax, komax; //adjusting modulated stiffness
+  double kt_modulation_factor, ko_modulation_factor, ktmax, komax, b_modulation_factor, bmax; //adjusting modulated impedance
   ros::WallTime t1, t2; //timer between collision detection and energy draining
   Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;

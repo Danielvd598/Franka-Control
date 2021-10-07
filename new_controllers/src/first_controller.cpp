@@ -88,6 +88,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/kt_modulation_factor",kt_modulation_factor);
   node_handle.getParam("/first_controller/ktmax",ktmax);
   node_handle.getParam("/first_controller/komax",komax);
+  node_handle.getParam("/first_controller/b_modulation_factor",b_modulation_factor);
+  node_handle.getParam("/first_controller/bmax",bmax);
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
@@ -483,6 +485,9 @@ void FirstController::update(const ros::Time& /*time*/,
       if(Ko(1,1) < komax) { //put an upper limit on the maximum stiffness
         ko_modulation_counter++;
       }
+      if(B(1,1) < bmax) { //put an upper limit on the maximum damping
+        b_modulation_counter++;
+      }
       Ko << ko+ko_modulation_factor*ko_modulation_counter, 0, 0,
             0, ko+ko_modulation_factor*ko_modulation_counter, 0,
             0, 0, ko+ko_modulation_factor*ko_modulation_counter;
@@ -491,7 +496,14 @@ void FirstController::update(const ros::Time& /*time*/,
             0, 0, kt+kt_modulation_factor*kt_modulation_counter;
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
-    ROS_INFO("Modulating the stiffness! Kt: %f, Ko: %f",Kt(1,1),Ko(1,1));
+      B << b+b_modulation_factor*b_modulation_counter, 0, 0, 0, 0, 0, 0,
+            0, b_modulation_factor*b_modulation_counter, 0, 0, 0, 0, 0,
+            0, 0, b_modulation_factor*b_modulation_counter, 0, 0, 0, 0,
+            0, 0, 0, b_modulation_factor*b_modulation_counter, 0, 0, 0,
+            0, 0, 0, 0, b_modulation_factor*b_modulation_counter, 0, 0,
+            0, 0, 0, 0, 0, b_modulation_factor*b_modulation_counter, 0,
+            0, 0, 0, 0, 0, 0, b_modulation_factor*b_modulation_counter;
+    ROS_INFO("Modulating the Impedance! Kt: %f, Ko: %f, b: %f",Kt(1,1),Ko(1,1), B(1,1));
     } else { //reset to original stiffness and reset counter
         ko_modulation_counter = 0;
         kt_modulation_counter = 0;
@@ -503,6 +515,13 @@ void FirstController::update(const ros::Time& /*time*/,
               0, 0, kt;
         Go = 0.5*trace(Ko)*I33 - Ko;
         Gt = 0.5*trace(Kt)*I33 - Kt;
+        B << b, 0, 0, 0, 0, 0, 0,
+              0, b, 0, 0, 0, 0, 0,
+              0, 0, b, 0, 0, 0, 0,
+              0, 0, 0, b, 0, 0, 0,
+              0, 0, 0, 0, b, 0, 0,
+              0, 0, 0, 0, 0, b, 0,
+              0, 0, 0, 0, 0, 0, b;
     }
   }
   
