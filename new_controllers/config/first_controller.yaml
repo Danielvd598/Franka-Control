@@ -42,9 +42,10 @@ first_controller:
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
     dataPrint: true
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_var_TBPeg_tau_desired.txt'
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_tau_desired.txt'
+    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V30_2_var_xyz_ref.txt'

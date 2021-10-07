@@ -107,7 +107,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/dataAnalysis_q_path", dataAnalysis_q_path);
   node_handle.getParam("/first_controller/dataAnalysis_tau_measured_path", dataAnalysis_tau_measured_path);
   node_handle.getParam("/first_controller/dataAnalysis_tau_desired_path", dataAnalysis_tau_desired_path);
-
+  node_handle.getParam("/first_controller/dataAnalysis_xyz_ref_path", dataAnalysis_xyz_ref_path);
 
   control_state = 0;
   Njoints = 7;
@@ -367,6 +367,10 @@ void FirstController::starting(const ros::Time& /*time*/) {
     if (!dataAnalysis_tau_desired.is_open())
     {
       dataAnalysis_tau_desired.open(dataAnalysis_tau_desired_path); //open file to write data to
+    }
+    if (!dataAnalysis_xyz_ref.is_open())
+    {
+      dataAnalysis_xyz_ref.open(dataAnalysis_xyz_ref_path); //open file to write data to
     }
   }
 }
@@ -657,13 +661,15 @@ void FirstController::update(const ros::Time& /*time*/,
   {
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
     && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open() && 
-    dataAnalysis_tau_measured.is_open() && dataAnalysis_tau_desired.is_open()){ 
+    dataAnalysis_tau_measured.is_open() && dataAnalysis_tau_desired.is_open() &&
+    dataAnalysis_xyz_ref.is_open()){ 
       dataAnalysis_tau_TB << tau_TB << std::endl;
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
       dataAnalysis_q << q << std::endl;
       dataAnalysis_tau_measured << tau_measured << std::endl;
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
+      dataAnalysis_xyz_ref << Hv0(0,3) << "\n" << Hv0(1,3) << "\n" << Hv0(2,3) << std::endl;
       } else std::cout << "Unable to open output txt files!";
   }
 
