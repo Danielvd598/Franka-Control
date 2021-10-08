@@ -29,7 +29,7 @@ first_controller:
     epsP: 50.1 #Power margin for collision detection [W]
     epsE: 5010 #Energy margin in the tanks, this value is a % of the total expected energy spend
     Ek_drained: 0.001 #maximum kinetic energy of the robot when it is assumed to be drained
-    TaskBased: true #wether or not we want to include feed-forward 
+    TaskBased: false #wether or not we want to include feed-forward 
     use_optimisation: true #IF SET TO FALSE MAKE SURE THE IMPEDANCE PARAMS ARE LOWER!!!!
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_cyclic: false #bool for using completing the trajectory repetivily 
@@ -43,7 +43,7 @@ first_controller:
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
-    dataPrint: true
+    dataPrint: false
     dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_1_var_tau_TB.txt'
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_1_var_tau_TF.txt'
     dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_1_var_dq.txt'

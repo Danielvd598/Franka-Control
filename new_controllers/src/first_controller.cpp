@@ -560,22 +560,16 @@ void FirstController::update(const ros::Time& /*time*/,
       ROS_INFO("grabbing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 2;
-    } else if (update_calls == static_cast<int>(t_flag[1]*1000)
-               && gripper_status.size() < 1000){
-      ROS_WARN("Failed to complete grabbing action, accuracy threshold not met!");
-    }
-    if (update_calls ==  static_cast<int>(t_flag[5]*1000) && 
+    } 
+    if (update_calls ==  static_cast<int>(t_flag[6]*1000) && 
     std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
     && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
       gripper_flag = 2;
       ROS_INFO("releasing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 3;
-    } else if (update_calls ==  static_cast<int>(t_flag[5]*1000) 
-               && gripper_status.size() < 1500){
-      ROS_WARN("Failed to complete releasing action, accuracy threshold not met!");
-    }
-    if (update_calls > (t_flag[4]*1000 + cycle_wait_period) && use_cyclic){
+    } 
+    if (update_calls > (t_flag[6]*1000 + cycle_wait_period) && use_cyclic){
       ROS_INFO("completed task, returning to initial position and repeating task");
       control_state = 1; 
       update_calls = 0;
@@ -627,13 +621,12 @@ void FirstController::update(const ros::Time& /*time*/,
       {
         double error = qi[i]-q[i];
         if(std::abs(error)>0.001){
-          std::cout << "\n Error is not small enough, error: \n" << 
-          error << "\n joint #: \n" << i << std::endl;
+          ROS_WARN("\n Error is not small enough:\n error: %f \n joint: %f",error,i);
           control_state = 1;
           break;
         }
         else if(std::abs(error)<=0.001 && i == q.size()-1){
-          std::cout << "\n Within limits, starting trajectory! \n" << std::endl;
+          ROS_INFO("\n Within limits, starting trajectory!");
           control_state = 2;
         }
       }
@@ -656,7 +649,7 @@ void FirstController::update(const ros::Time& /*time*/,
       P_action[i] = std::abs(kp/dq[i]);
       tau_cmd[i] = P_action[i] * (qi[i]-q[i]) + kd*(-dq[i]); //Joint space control
     }
-    std::cout << "joint error: \n" << qi-q << std::endl;
+    //std::cout << "joint error: \n" << qi-q << std::endl;
   }
   if(control_state==3){ 
     ROS_WARN("Trajectory failed, draining the kinetic energy!");
@@ -717,13 +710,15 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
   //std::cout << "q: \n" << q << std::endl;
-  std::cout << "Hn0: \n" << Hn0 << std::endl;
+  //std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
- // std::cout << "Hnv: \n" << Hnv << std::endl;
+  //these messages are useful when using cartesian control only
+  if(control_state == 2){
+    std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
+  }
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  std::cout << "update calls:\n " << update_calls << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
   //std::cout << "Energy Tank levels: \n" << Etank << std::endl;
   //std::cout << "Control state: \n" << control_state << std::endl;
