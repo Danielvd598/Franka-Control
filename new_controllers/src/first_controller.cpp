@@ -307,7 +307,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   inFile.close();
   t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3],
-            t_flag_index[4], t_flag_index[5];
+            t_flag_index[4], t_flag_index[5], t_flag_index[6];
 
   trajectory_state = 0;
   ko_modulation_counter = 0;
