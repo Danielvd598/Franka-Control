@@ -581,7 +581,6 @@ void FirstController::update(const ros::Time& /*time*/,
 
   // only publish gripper flag if releasing and grabbing, sleep for 1 seconds to complete action
   if (gripper_flag != 0) {
-      ROS_INFO("Moving the gripper!");
       gripper_flag_pub.publish(gripper_flag_msg);
       gripper_calls++;
   }
@@ -621,7 +620,7 @@ void FirstController::update(const ros::Time& /*time*/,
       {
         double error = qi[i]-q[i];
         if(std::abs(error)>0.001){
-          ROS_WARN("\n Error is not small enough:\n error: %f \n joint: %f",error,i);
+          ROS_WARN("\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
           control_state = 1;
           break;
         }
@@ -710,13 +709,13 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
   //std::cout << "Hv0: \n" << Hv0 << std::endl;
   //std::cout << "q: \n" << q << std::endl;
-  //std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
   //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
   //std::cout << "Wn: \n" << Wn << std::endl;
   //std::cout << "W0: \n" << W0 << std::endl;
   //these messages are useful when using cartesian control only
   if(control_state == 2){
-    std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
+    //std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
+    std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
   }
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
