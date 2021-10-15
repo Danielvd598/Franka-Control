@@ -476,53 +476,17 @@ void FirstController::update(const ros::Time& /*time*/,
 
 //only modulated stiffness when doing cartesian control, otherwise the torque commands
 //will have sudden jumps
-  if(use_modulated_TF){
-    if ((dq.array() < 0.1).all() && (dq.array() > -0.1).all() 
-    && control_state == 2 && gripper_flag == 0){
-      if(Kt(1,1) < ktmax) { //put an upper limit on the maximum stiffness
-        kt_modulation_counter++;
-      }
-      if(Ko(1,1) < komax) { //put an upper limit on the maximum stiffness
-        ko_modulation_counter++;
-      }
-      if(B(1,1) < bmax) { //put an upper limit on the maximum damping
-        b_modulation_counter++;
-      }
-      Ko << ko+ko_modulation_factor*ko_modulation_counter, 0, 0,
-            0, ko+ko_modulation_factor*ko_modulation_counter, 0,
-            0, 0, ko+ko_modulation_factor*ko_modulation_counter;
-      Kt << kt+kt_modulation_factor*kt_modulation_counter, 0, 0,
-            0, kt+kt_modulation_factor*kt_modulation_counter, 0,
-            0, 0, kt+kt_modulation_factor*kt_modulation_counter;
+  if(use_modulated_TF && control_state == 2 && gripper_flag == 0){
+    Kt << kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
+          0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
+          0, 0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
+    Ko << ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
+          0, ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
+          0, 0, ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(2,3)),3));
     Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
-      B << b+b_modulation_factor*b_modulation_counter, 0, 0, 0, 0, 0, 0,
-            0, b_modulation_factor*b_modulation_counter, 0, 0, 0, 0, 0,
-            0, 0, b_modulation_factor*b_modulation_counter, 0, 0, 0, 0,
-            0, 0, 0, b_modulation_factor*b_modulation_counter, 0, 0, 0,
-            0, 0, 0, 0, b_modulation_factor*b_modulation_counter, 0, 0,
-            0, 0, 0, 0, 0, b_modulation_factor*b_modulation_counter, 0,
-            0, 0, 0, 0, 0, 0, b_modulation_factor*b_modulation_counter;
-    ROS_INFO("Modulating the Impedance! Kt: %f, Ko: %f, b: %f",Kt(1,1),Ko(1,1), B(1,1));
-    } else { //reset to original stiffness and reset counter
-        ko_modulation_counter = 0;
-        kt_modulation_counter = 0;
-        Ko << ko, 0, 0,
-              0, ko, 0,
-              0, 0, ko;
-        Kt << kt, 0, 0,
-              0, kt, 0,
-              0, 0, kt;
-        Go = 0.5*trace(Ko)*I33 - Ko;
-        Gt = 0.5*trace(Kt)*I33 - Kt;
-        B << b, 0, 0, 0, 0, 0, 0,
-              0, b, 0, 0, 0, 0, 0,
-              0, 0, b, 0, 0, 0, 0,
-              0, 0, 0, b, 0, 0, 0,
-              0, 0, 0, 0, b, 0, 0,
-              0, 0, 0, 0, 0, b, 0,
-              0, 0, 0, 0, 0, 0, b;
-    }
+    ROS_INFO_THROTTLE(0.1,"Modulating the stiffness!\n Kt: %f, %f, %f \n Ko: %f, %f, %f",
+              Kt(0,0),Kt(1,1), Kt(2,2),Ko(0,0),Ko(1,1), Ko(2,2));
   }
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
@@ -549,7 +513,7 @@ void FirstController::update(const ros::Time& /*time*/,
     gripper_flag = 0; //doing nothing 
     if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
       gripper_flag = 2; //make sure the gripper is open before grabbing
-      ROS_INFO("Opening the gripper before grabbing action!");
+      ROS_INFO_THROTTLE(0.1,"Opening the gripper before grabbing action!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 1;
     } 
@@ -557,7 +521,7 @@ void FirstController::update(const ros::Time& /*time*/,
         std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
         std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
       gripper_flag = 1; 
-      ROS_INFO("grabbing!");
+      ROS_INFO_THROTTLE(0.1,"grabbing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 2;
     } 
@@ -565,12 +529,12 @@ void FirstController::update(const ros::Time& /*time*/,
     std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
     && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
       gripper_flag = 2;
-      ROS_INFO("releasing!");
+      ROS_INFO_THROTTLE(0.1,"releasing!");
       gripper_status.conservativeResize(gripper_calls+1,1);
       gripper_status.row(gripper_calls) << 3;
     } 
     if (update_calls > (t_flag[6]*1000 + cycle_wait_period) && use_cyclic){
-      ROS_INFO("completed task, returning to initial position and repeating task");
+      ROS_INFO_THROTTLE(0.1,"completed task, returning to initial position and repeating task");
       control_state = 1; 
       update_calls = 0;
     }
@@ -597,7 +561,7 @@ void FirstController::update(const ros::Time& /*time*/,
       //check if a tank is empty
       if(Etank(i) <= 0 && !fail){
         fail = true;
-        ROS_WARN("Energy tank of joint %f is empty!",(i+1));
+        ROS_WARN_THROTTLE(0.1,"Energy tank of joint %f is empty!",(i+1));
         t1 = ros::WallTime::now();
       }
     }
@@ -608,7 +572,7 @@ void FirstController::update(const ros::Time& /*time*/,
       drained = true;
       t2 = ros::WallTime::now();
       double drainage_time = (t2 - t1).toSec();
-      ROS_WARN("Energy drained, system is compliant!");
+      ROS_WARN_THROTTLE(0.1,"Energy drained, system is compliant!");
       ROS_INFO_STREAM("\nDrainage time (s): " << drainage_time);
     }
   }
@@ -620,7 +584,7 @@ void FirstController::update(const ros::Time& /*time*/,
       {
         double error = qi[i]-q[i];
         if(std::abs(error)>0.001){
-          ROS_WARN("\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
+          ROS_WARN_THROTTLE(0.1,"\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
           control_state = 1;
           break;
         }
@@ -651,7 +615,7 @@ void FirstController::update(const ros::Time& /*time*/,
     //std::cout << "joint error: \n" << qi-q << std::endl;
   }
   if(control_state==3){ 
-    ROS_WARN("Trajectory failed, draining the kinetic energy!");
+    ROS_WARN_THROTTLE(0.1,"Trajectory failed, draining the kinetic energy!");
     tau_cmd = -bdrain * dq;// draining the kinetic energy of the system
   }
   if(control_state==4 || gripper_flag != 0){ //if gripper is moving don't send torque commands
@@ -692,7 +656,7 @@ void FirstController::update(const ros::Time& /*time*/,
     if (update_calls == static_cast<int>(t_flag[i]*1000) && 
         (std::abs(Hnv(0,3)) > accuracy_thr || std::abs(Hnv(1,3)) > accuracy_thr ||
          std::abs(Hnv(2,3)) > accuracy_thr)){
-        ROS_INFO("Accuracy is not sufficient enough at flag point!");
+        ROS_INFO_THROTTLE(0.1,"Accuracy is not sufficient enough at flag point!");
         accuracy_flag = 0; 
         break;
     }
@@ -714,8 +678,8 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   //these messages are useful when using cartesian control only
   if(control_state == 2){
-    //std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
-    std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
+    std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
+    //std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
   }
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
