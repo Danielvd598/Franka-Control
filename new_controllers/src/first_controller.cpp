@@ -395,7 +395,7 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
   Eigen::VectorXd tau_d(7),tau_TF(7),tau_TB(7),desired_force_torque(6), tau_cmd(7), 
-  tau_ext(7);
+  tau_ext(7), dq_ref(7);
   desired_force_torque.setZero();
 
   Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
@@ -443,15 +443,13 @@ void FirstController::update(const ros::Time& /*time*/,
 
   if(update_calls<optimisation_length){
     tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
-    if(use_optimisation){ //only overwrite if we want a Task-Free feed-back behaviour
-      Hv0 = Hv0_matrices[update_calls].H;
-    }
+    Hv0 = Hv0_matrices[update_calls].H;
+    dq_ref = qdot_mat.col(update_calls);
   } else { //no TB torque
     tau_TB << 0,0,0,0,0,0,0;
-    if(use_optimisation) { //if you still want to use the optimisation use the last matrix as reference
-      Hv0 = Hv0_matrices[optimisation_length - 1].H;
-    }
+    Hv0 = Hv0_matrices[optimisation_length - 1].H;
   }
+
   if (!TaskBased)
   {
     tau_TB << 0,0,0,0,0,0,0;
@@ -480,10 +478,6 @@ void FirstController::update(const ros::Time& /*time*/,
     Kt << kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
           0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
           0, 0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
-    Ko << ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
-          0, ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
-          0, 0, ko + (komax-ko)/(1 + ko_modulation_factor*pow(std::abs(Hnv(2,3)),3));
-    Go = 0.5*trace(Ko)*I33 - Ko;
     Gt = 0.5*trace(Kt)*I33 - Kt;
     ROS_INFO_THROTTLE(0.1,"Modulating the stiffness!\n Kt: %f, %f, %f \n Ko: %f, %f, %f",
               Kt(0,0),Kt(1,1), Kt(2,2),Ko(0,0),Ko(1,1), Ko(2,2));
@@ -495,7 +489,7 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_TF = GeoJac.transpose() * W0 - (B * dq);
+  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref));
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
@@ -672,7 +666,7 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   //these messages are useful when using cartesian control only
   if(control_state == 2){
-    ROS_INFO_THROTTLE(0.1,"Update calls: %f", update_calls);
+    ROS_INFO_THROTTLE(0.1,"Update calls: %d", update_calls);
     ROS_INFO_THROTTLE(0.1,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
     //ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
   }
