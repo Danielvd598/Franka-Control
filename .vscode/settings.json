@@ -71,7 +71,8 @@
         "mixinvector": "cpp",
         "texture": "cpp",
         "buffered_value": "cpp",
-        "fast_back_stack": "cpp"
+        "fast_back_stack": "cpp",
+        "core": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

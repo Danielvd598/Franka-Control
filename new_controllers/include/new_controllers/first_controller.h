@@ -83,8 +83,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int control_state; 
   int ko_modulation_counter, kt_modulation_counter, b_modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length; 
-  bool use_optimisation, TaskBased, dataPrint, use_modulated_TF, use_cyclic, 
-  use_dynamic_injection, fail, drained;
+  bool use_TB, dataPrint, use_modulated_TF, use_dynamic_injection, fail, drained;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, tauc_gravity_path,
   dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path,
@@ -94,14 +93,14 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
   double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
   double Ek; //current total kinetic energy of the robot
-  double cycle_wait_period; //how long the programm should wait before repeating task [ms]
-  double xd, yd, zd, phi, psi, theta; // desired configuration
   double kp, kd; //PD join space control parameters
+  double alpha; //lowpassfilter constant
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
   double kt_modulation_factor, ko_modulation_factor, ktmax, komax, b_modulation_factor, bmax; //adjusting modulated impedance
   ros::WallTime t1, t2; //timer between collision detection and energy draining
   Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
+  Eigen::Matrix<double, 7, 2> x; //low-pass filter state
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
   Eigen::Matrix<double, 3, 3> Ko;
@@ -133,6 +132,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
     Eigen::Matrix<double,4, 4> H0;
   } Brockett_p [7]; //this structure is 7 items long
 
+  Eigen::Matrix<double,7,1> LowPassFilter(const Eigen::Matrix<double, 7, 1>& u);
   double trace(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> As(const 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& matrix);

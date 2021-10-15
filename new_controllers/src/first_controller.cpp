@@ -68,21 +68,14 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  node_handle.getParam("/first_controller/use_optimisation",use_optimisation);
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
-  node_handle.getParam("/first_controller/use_cyclic",use_cyclic);
   node_handle.getParam("/first_controller/use_dynamic_injection",use_dynamic_injection);
-  node_handle.getParam("/first_controller/TaskBased",TaskBased);
+  node_handle.getParam("/first_controller/use_TB",use_TB);
   node_handle.getParam("/first_controller/kt",kt);
   node_handle.getParam("/first_controller/ko",ko);
   node_handle.getParam("/first_controller/b",b);
   node_handle.getParam("/first_controller/bdrain",bdrain);
-  node_handle.getParam("/first_controller/xd",xd);
-  node_handle.getParam("/first_controller/yd",yd);
-  node_handle.getParam("/first_controller/zd",zd);
-  node_handle.getParam("/first_controller/phi",phi);
-  node_handle.getParam("/first_controller/psi",psi);
-  node_handle.getParam("/first_controller/theta",theta);
+  node_handle.getParam("/first_controller/alpha",alpha);
   node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
   node_handle.getParam("/first_controller/ko_modulation_factor",ko_modulation_factor);
   node_handle.getParam("/first_controller/kt_modulation_factor",kt_modulation_factor);
@@ -101,7 +94,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/tauc_gravity_path", tauc_gravity_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
-  node_handle.getParam("/first_controller/cycle_wait_period", cycle_wait_period);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
   node_handle.getParam("/first_controller/dataAnalysis_tau_TB_path", dataAnalysis_tau_TB_path);
   node_handle.getParam("/first_controller/dataAnalysis_tau_TF_path", dataAnalysis_tau_TF_path);
@@ -177,123 +169,113 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   Brockett_p[6].H0 = H70_0;
 
   // read the optimisation data
-  //read torque data
-  if(use_optimisation){
-    // read task-based torque data
-    inFile.open(torque_path);
-    if(!inFile) {
-      std::cerr << "Unable to open torque txt file!";
-      exit(1);
-    }
-    num = 0.0;
-    while (inFile >> num){
-      tau_TB_index.push_back(num);
-    }
-    // determine the total length of the optimisation
-    optimisation_length = tau_TB_index.size()/Njoints;
-    tau_TB_mat.conservativeResize(7,optimisation_length);
-    ROS_INFO("total optimisation length [ms]: %d", optimisation_length);
-    for(size_t i=0;i<optimisation_length;i++){   
-      tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
-                           tau_TB_index[2*optimisation_length+i],
-                           tau_TB_index[3*optimisation_length+i], 
-                           tau_TB_index[4*optimisation_length+i], 
-                           tau_TB_index[5*optimisation_length+i],
-                           tau_TB_index[6*optimisation_length+i]; 
-    } 
-    inFile.close();
-
-    // read task-based torque data including gravity
-    inFile.open(tauc_gravity_path);
-    if(!inFile) {
-      std::cerr << "Unable to open torque gravity txt file!";
-      exit(1);
-    }
-    num = 0.0;
-    while (inFile >> num){
-      tauc_gravity_index.push_back(num);
-    }
-    tauc_gravity_mat.conservativeResize(7,optimisation_length);
-    for(size_t i=0;i<optimisation_length;i++){   
-      tauc_gravity_mat.col(i) << tauc_gravity_index[i], tauc_gravity_index[optimisation_length+i], 
-                           tauc_gravity_index[2*optimisation_length+i],
-                           tauc_gravity_index[3*optimisation_length+i], 
-                           tauc_gravity_index[4*optimisation_length+i], 
-                           tauc_gravity_index[5*optimisation_length+i],
-                           tauc_gravity_index[6*optimisation_length+i]; 
-    } 
-    inFile.close();
-
-    //read optimised joint velocities
-    inFile.open(qdot_path);
-    if(!inFile) {
-      std::cerr << "Unable to open qdot txt file!";
-      exit(1);
-    }
-    num = 0.0;
-    while (inFile >> num){
-      qdot_index.push_back(num);
-    }
-    qdot_mat.conservativeResize(7,optimisation_length);
-    for(size_t i=0;i<(optimisation_length-1)*Njoints;i=i+Njoints){
-      qdot_mat.col(i/Njoints) << qdot_index[i],qdot_index[i+1], 
-                         qdot_index[i+2],
-                         qdot_index[i+3], 
-                         qdot_index[i+4], 
-                         qdot_index[i+5],
-                         qdot_index[i+6]; 
-    } 
-    inFile.close();
-
-    //read desired configuration data
-    inFile.open(Hv0_path);
-    if(!inFile) {
-      std::cerr << "Unable to open end-effector trajectory txt file";
-      exit(1);
-    }
-    num = 0.0;
-    while (inFile >> num){
-      Hv0_index.push_back(num);
-    }
-    inFile.close();
-
-    inFile.open(qi_path);
-    if(!inFile) {
-      std::cerr << "Unable to open initial joint configuration txt file!";
-      exit(1);
-    }
-    num = 0.0;
-    while(inFile >> num){
-      qi_index.push_back(num);
-    }
-    inFile.close();
-    qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
-
-    Hv0_matrices = new Hv0_struct [optimisation_length]; //create new structure with initialized size
-    for(size_t i=0;i<optimisation_length;i++){
-      Hv0_optimised << Hv0_index[i], 
-                      Hv0_index[optimisation_length+i], 
-                      Hv0_index[2*optimisation_length+i], 
-                      Hv0_index[9*optimisation_length+i], //Hv0(1,4)
-                      Hv0_index[3*optimisation_length+i],
-                      Hv0_index[4*optimisation_length+i],
-                      Hv0_index[5*optimisation_length+i],
-                      Hv0_index[10*optimisation_length+i], //Hv0(2,4)
-                      Hv0_index[6*optimisation_length+i],
-                      Hv0_index[7*optimisation_length+i],
-                      Hv0_index[8*optimisation_length+i],
-                      Hv0_index[11*optimisation_length+i], //Hv0(3,4)
-                      0,0,0,1;
-      Hv0_matrices[i].H = Hv0_optimised;
-    } 
-  } else{
-      Hv0 << cos(theta)*cos(psi), -cos(phi)*sin(theta) + sin(psi)*sin(phi)*cos(theta), 
-       sin(theta)*sin(phi) + cos(theta)*sin(psi)*cos(phi), xd,
-             cos(psi)*sin(theta), cos(theta)*cos(phi) + sin(theta)*sin(phi)*sin(psi), 
-      -sin(phi)*cos(theta) + cos(phi)*sin(psi)*sin(theta), yd,
-             -sin(psi), sin(phi)*cos(psi), cos(psi)*cos(phi), zd,
-              0, 0, 0, 1;
+  // read task-based torque data
+  inFile.open(torque_path);
+  if(!inFile) {
+    std::cerr << "Unable to open torque txt file!";
+    exit(1);
   }
+  num = 0.0;
+  while (inFile >> num){
+    tau_TB_index.push_back(num);
+  }
+  // determine the total length of the optimisation
+  optimisation_length = tau_TB_index.size()/Njoints;
+  tau_TB_mat.conservativeResize(7,optimisation_length);
+  ROS_INFO("total optimisation length [ms]: %d", optimisation_length);
+  for(size_t i=0;i<optimisation_length;i++){   
+    tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
+                          tau_TB_index[2*optimisation_length+i],
+                          tau_TB_index[3*optimisation_length+i], 
+                          tau_TB_index[4*optimisation_length+i], 
+                          tau_TB_index[5*optimisation_length+i],
+                          tau_TB_index[6*optimisation_length+i]; 
+  } 
+  inFile.close();
+
+  // read task-based torque data including gravity
+  inFile.open(tauc_gravity_path);
+  if(!inFile) {
+    std::cerr << "Unable to open torque gravity txt file!";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    tauc_gravity_index.push_back(num);
+  }
+  tauc_gravity_mat.conservativeResize(7,optimisation_length);
+  for(size_t i=0;i<optimisation_length;i++){   
+    tauc_gravity_mat.col(i) << tauc_gravity_index[i], tauc_gravity_index[optimisation_length+i], 
+                          tauc_gravity_index[2*optimisation_length+i],
+                          tauc_gravity_index[3*optimisation_length+i], 
+                          tauc_gravity_index[4*optimisation_length+i], 
+                          tauc_gravity_index[5*optimisation_length+i],
+                          tauc_gravity_index[6*optimisation_length+i]; 
+  } 
+  inFile.close();
+
+  //read optimised joint velocities
+  inFile.open(qdot_path);
+  if(!inFile) {
+    std::cerr << "Unable to open qdot txt file!";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    qdot_index.push_back(num);
+  }
+  qdot_mat.conservativeResize(7,optimisation_length);
+  for(size_t i=0;i<(optimisation_length-1)*Njoints;i=i+Njoints){
+    qdot_mat.col(i/Njoints) << qdot_index[i],qdot_index[i+1], 
+                        qdot_index[i+2],
+                        qdot_index[i+3], 
+                        qdot_index[i+4], 
+                        qdot_index[i+5],
+                        qdot_index[i+6]; 
+  } 
+  inFile.close();
+
+  //read desired configuration data
+  inFile.open(Hv0_path);
+  if(!inFile) {
+    std::cerr << "Unable to open end-effector trajectory txt file";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    Hv0_index.push_back(num);
+  }
+  inFile.close();
+
+  inFile.open(qi_path);
+  if(!inFile) {
+    std::cerr << "Unable to open initial joint configuration txt file!";
+    exit(1);
+  }
+  num = 0.0;
+  while(inFile >> num){
+    qi_index.push_back(num);
+  }
+  inFile.close();
+  qi << qi_index[0],qi_index[1],qi_index[2],qi_index[3],qi_index[4],qi_index[5],qi_index[6];
+
+  Hv0_matrices = new Hv0_struct [optimisation_length]; //create new structure with initialized size
+  for(size_t i=0;i<optimisation_length;i++){
+    Hv0_optimised << Hv0_index[i], 
+                    Hv0_index[optimisation_length+i], 
+                    Hv0_index[2*optimisation_length+i], 
+                    Hv0_index[9*optimisation_length+i], //Hv0(1,4)
+                    Hv0_index[3*optimisation_length+i],
+                    Hv0_index[4*optimisation_length+i],
+                    Hv0_index[5*optimisation_length+i],
+                    Hv0_index[10*optimisation_length+i], //Hv0(2,4)
+                    Hv0_index[6*optimisation_length+i],
+                    Hv0_index[7*optimisation_length+i],
+                    Hv0_index[8*optimisation_length+i],
+                    Hv0_index[11*optimisation_length+i], //Hv0(3,4)
+                    0,0,0,1;
+    Hv0_matrices[i].H = Hv0_optimised;
+  } 
 
   inFile.open(t_flag_path);
     if(!inFile) {
@@ -316,6 +298,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   gripper_flag = 0;
   fail = 0;
   drained = 0;
+  x << 0,0,0,0,0,0,0,0,0,0,0,0,0,0; //initialize filter
   gripper_flag_pub = node_handle.advertise<std_msgs::Int16>("gripper_flag",10);
   P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
@@ -450,7 +433,7 @@ void FirstController::update(const ros::Time& /*time*/,
     Hv0 = Hv0_matrices[optimisation_length - 1].H;
   }
 
-  if (!TaskBased)
+  if (!use_TB)
   {
     tau_TB << 0,0,0,0,0,0,0;
   }
@@ -472,6 +455,8 @@ void FirstController::update(const ros::Time& /*time*/,
             pnv(2), 0, -pnv(0),
             -pnv(1), pnv(0), 0;
 
+  Eigen::Matrix<double,7,1> dq_ref_filt = LowPassFilter(dq_ref);
+
 //only modulated stiffness when doing cartesian control, otherwise the torque commands
 //will have sudden jumps
   if(use_modulated_TF && control_state == 2 && gripper_flag == 0){
@@ -489,7 +474,7 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref));
+  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref_filt));
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
@@ -503,36 +488,29 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   // determine gripper flag value
-  if (use_optimisation){
-    gripper_flag = 0; //doing nothing 
-    if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
-      gripper_flag = 2; //make sure the gripper is open before grabbing
-      ROS_INFO_THROTTLE(0.1,"Opening the gripper before grabbing action!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 1;
-    } 
-    if (update_calls == static_cast<int>(t_flag[1]*1000) && 
-        std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
-        std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
-      gripper_flag = 1; 
-      ROS_INFO_THROTTLE(0.1,"grabbing!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 2;
-    } 
-    if (update_calls ==  static_cast<int>(t_flag[6]*1000) && 
-    std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
-    && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
-      gripper_flag = 2;
-      ROS_INFO_THROTTLE(0.1,"releasing!");
-      gripper_status.conservativeResize(gripper_calls+1,1);
-      gripper_status.row(gripper_calls) << 3;
-    } 
-    if (update_calls > (t_flag[6]*1000 + cycle_wait_period) && use_cyclic){
-      ROS_INFO_THROTTLE(0.1,"completed task, returning to initial position and repeating task");
-      control_state = 1; 
-      update_calls = 0;
-    }
-  }
+  gripper_flag = 0; //doing nothing 
+  if (update_calls > 1 && update_calls <= t_flag[0]*1000 && gripper_status.size() < 500){
+    gripper_flag = 2; //make sure the gripper is open before grabbing
+    ROS_INFO_THROTTLE(0.1,"Opening the gripper before grabbing action!");
+    gripper_status.conservativeResize(gripper_calls+1,1);
+    gripper_status.row(gripper_calls) << 1;
+  } 
+  if (update_calls == static_cast<int>(t_flag[1]*1000) && 
+      std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr && 
+      std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1000) {
+    gripper_flag = 1; 
+    ROS_INFO_THROTTLE(0.1,"grabbing!");
+    gripper_status.conservativeResize(gripper_calls+1,1);
+    gripper_status.row(gripper_calls) << 2;
+  } 
+  if (update_calls ==  static_cast<int>(t_flag[6]*1000) && 
+  std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
+  && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
+    gripper_flag = 2;
+    ROS_INFO_THROTTLE(0.1,"releasing!");
+    gripper_status.conservativeResize(gripper_calls+1,1);
+    gripper_status.row(gripper_calls) << 3;
+  } 
 
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
@@ -572,28 +550,27 @@ void FirstController::update(const ros::Time& /*time*/,
   }
 
   //determine control_state
-  if(use_optimisation){
-    if(control_state!=2 && control_state!=3 && control_state!=4){ //only do at start
-      for (size_t i=0;i<q.size();i++)
-      {
-        double error = qi[i]-q[i];
-        if(std::abs(error)>0.001){
-          ROS_WARN_THROTTLE(0.1,"\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
-          control_state = 1;
-          break;
-        }
-        else if(std::abs(error)<=0.001 && i == q.size()-1){
-          ROS_INFO("\n Within limits, starting trajectory!");
-          control_state = 2;
-        }
+  if(control_state!=2 && control_state!=3 && control_state!=4){ //only do at start
+    for (size_t i=0;i<q.size();i++)
+    {
+      double error = qi[i]-q[i];
+      if(std::abs(error)>0.001){
+        ROS_WARN_THROTTLE(0.1,"\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
+        control_state = 1;
+        break;
+      }
+      else if(std::abs(error)<=0.001 && i == q.size()-1){
+        ROS_INFO("\n Within limits, starting trajectory!");
+        control_state = 2;
       }
     }
-    if(fail && !drained){
-      control_state = 3;
-    } else if(fail && drained){
-      control_state = 4;
-    }
-  } else control_state = 2;
+  }
+  if(fail && !drained){
+    control_state = 3;
+  } else if(fail && drained){
+    control_state = 4;
+  }
+
 
   //set torque command based on the control state
   if(control_state==2){
@@ -737,6 +714,15 @@ AdH << Hmat(0,0), Hmat(0,1), Hmat(0,2), 0, 0, 0,
        pR(1,0), pR(1,1), pR(1,2), Hmat(1,0), Hmat(1,1), Hmat(1,2),
        pR(2,0), pR(2,1), pR(2,2), Hmat(2,0), Hmat(2,1), Hmat(2,2);
 return AdH;
+}
+
+Eigen::Matrix<double,7,1> FirstController::LowPassFilter(const Eigen::Matrix<double,7,1>& u){
+  Eigen::Matrix<double,7,1> u_filt;
+  for(size_t i;i<Njoints;i++){
+    x(i,1) = (1-alpha)*x(i,0) + alpha*u(i,0);
+    u_filt << x(0,0), x(1,0), x(2,0), x(3,0), x(4,0), x(5,0), x(6,0);
+  }
+  return u_filt;
 }
 
 //Brockett's formula to find the homegenous transform from any link 
