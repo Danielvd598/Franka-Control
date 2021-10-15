@@ -612,7 +612,6 @@ void FirstController::update(const ros::Time& /*time*/,
       P_action[i] = std::abs(kp/dq[i]);
       tau_cmd[i] = P_action[i] * (qi[i]-q[i]) + kd*(-dq[i]); //Joint space control
     }
-    //std::cout << "joint error: \n" << qi-q << std::endl;
   }
   if(control_state==3){ 
     ROS_WARN_THROTTLE(0.1,"Trajectory failed, draining the kinetic energy!");
@@ -622,13 +621,6 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
 
-  //THIS IS ONLY USED FOR TESTING DOWNWARDS FORCE
-  // Wn << 0,0,0,0,0,34;
-  // W0 = Adjoint(H0n).transpose() * Wn;
-  // tau_cmd = GeoJac.transpose() * W0;
-
-
-
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
   //export data for analysis
@@ -637,7 +629,7 @@ void FirstController::update(const ros::Time& /*time*/,
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
     && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open() && 
     dataAnalysis_tau_measured.is_open() && dataAnalysis_tau_desired.is_open() &&
-    dataAnalysis_xyz_ref.is_open()){ 
+    dataAnalysis_xyz_ref.is_open() && gripper_flag = 0){ 
       dataAnalysis_tau_TB << tau_TB << std::endl;
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
@@ -645,7 +637,7 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_measured << tau_measured << std::endl;
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
       dataAnalysis_xyz_ref << Hv0(0,3) << "\n" << Hv0(1,3) << "\n" << Hv0(2,3) << std::endl;
-      } else std::cout << "Unable to open output txt files!";
+      } else ROS_ERORR("Unable to open output txt files!");
   }
 
   for (size_t i = 0; i < 7; ++i) {
