@@ -102,6 +102,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/dataAnalysis_tau_measured_path", dataAnalysis_tau_measured_path);
   node_handle.getParam("/first_controller/dataAnalysis_tau_desired_path", dataAnalysis_tau_desired_path);
   node_handle.getParam("/first_controller/dataAnalysis_xyz_ref_path", dataAnalysis_xyz_ref_path);
+  node_handle.getParam("/first_controller/dataAnalysis_accuracy_thr_path", dataAnalysis_accuracy_thr_path);
+
 
   control_state = 0;
   Njoints = 7;
@@ -608,6 +610,9 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_q << q << std::endl;
       dataAnalysis_tau_measured << tau_measured << std::endl;
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
+      if(accuracy_flag == 0){//print such that I know where optimised/realtime is disrupted
+        dataAnalysis_accuracy_thr << update_calls << std::endl;
+      }
       dataAnalysis_xyz_ref << Hv0(0,3) << "\n" << Hv0(1,3) << "\n" << Hv0(2,3) << std::endl;
       }
     } else std::cerr << "Unable to open output txt files!";
@@ -628,30 +633,13 @@ void FirstController::update(const ros::Time& /*time*/,
     else accuracy_flag = 1;
   }
 
-  // std::cout << "gripper_status: \n" <<gripper_status << std::endl;
-  // std::cout << "gripper_flag: \n" <<gripper_flag << std::endl;
-  // std::cout << "gripper_calls: \n" <<gripper_calls << std::endl;
 
-  //std::cout << "tau_cmd: \n" << tau_cmd << std::endl;
-  //std::cout << "tau_d: \n" << tau_d << std::endl;
-  //std::cout << "tau_J_d: \n" << tau_J_d << std::endl;
-  //std::cout << "tau_measured: \n" << tau_measured-gravity << std::endl;
-  //std::cout << "Hv0: \n" << Hv0 << std::endl;
-  //std::cout << "q: \n" << q << std::endl;
-  //std::cout << "Geometric Jacobian: \n" << GeoJac << std::endl;
-  //std::cout << "Wn: \n" << Wn << std::endl;
-  //std::cout << "W0: \n" << W0 << std::endl;
-  //these messages are useful when using cartesian control only
   if(control_state == 2){
     ROS_INFO_THROTTLE(0.1,"Update calls: %d", update_calls);
     ROS_INFO_THROTTLE(0.1,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
-    //ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
+
   }
-  //std::cout << "tau_TB:\n " << tau_TB << std::endl;
-  //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
-  //std::cout << "Energy Tank levels: \n" << Etank << std::endl;
-  //std::cout << "Control state: \n" << control_state << std::endl;
-  //std::cout << "Accuracy_flag: \n" << accuracy_flag << std::endl;
+  //ROS_INFO_THROTTLE(0.1,"pn0: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
 
   if(control_state==2 && gripper_flag == 0 && accuracy_flag == 1){
     update_calls++; //update function calls

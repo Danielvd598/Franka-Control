@@ -87,7 +87,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, tauc_gravity_path,
   dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path,
-  dataAnalysis_xyz_ref_path;
+  dataAnalysis_xyz_ref_path, dataAnalysis_accuracy_thr_path;
   double kt, ko, b; //impedance control paramaters
   double bdrain; //drainage damping
   double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
@@ -125,7 +125,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt; //Power consumption based on optimisation
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured, dataAnalysis_tau_desired,
-  dataAnalysis_xyz_ref;
+  dataAnalysis_xyz_ref, dataAnalysis_accuracy_thr;
 
   struct Brockett_params {
     Eigen::Matrix<double, 6, 1> Twist;
