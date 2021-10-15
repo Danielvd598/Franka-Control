@@ -359,6 +359,10 @@ void FirstController::starting(const ros::Time& /*time*/) {
     {
       dataAnalysis_xyz_ref.open(dataAnalysis_xyz_ref_path); //open file to write data to
     }
+    if (!dataAnalysis_accuracy_thr.is_open())
+    {
+      dataAnalysis_accuracy_thr.open(dataAnalysis_accuracy_thr_path); //open file to write data to
+    }
   }
 }
 
@@ -476,7 +480,7 @@ void FirstController::update(const ros::Time& /*time*/,
   mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
   Wn << mn, fn;
   W0 = Adjoint(H0n).transpose() * Wn;
-  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref_filt));
+  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref));
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
