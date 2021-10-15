@@ -192,7 +192,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     // determine the total length of the optimisation
     optimisation_length = tau_TB_index.size()/Njoints;
     tau_TB_mat.conservativeResize(7,optimisation_length);
-    std::cout << "total optimisation length [ms]: " << optimisation_length << std::endl;
+    ROS_INFO("total optimisation length [ms]: %d", optimisation_length);
     for(size_t i=0;i<optimisation_length;i++){   
       tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
                            tau_TB_index[2*optimisation_length+i],
@@ -214,7 +214,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       tauc_gravity_index.push_back(num);
     }
     tauc_gravity_mat.conservativeResize(7,optimisation_length);
-    std::cout << "total optimisation length [ms]: " << optimisation_length << std::endl;
     for(size_t i=0;i<optimisation_length;i++){   
       tauc_gravity_mat.col(i) << tauc_gravity_index[i], tauc_gravity_index[optimisation_length+i], 
                            tauc_gravity_index[2*optimisation_length+i],
@@ -329,9 +328,10 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   if(use_dynamic_injection){
     Etank = Etank*epsE;
   } else Etank = Etank + epsE*Etank;
-  std::cout << "Initial energy tank level: \n" << Etank << std::endl;
-  std::cout << "The trajectory flags are at t = \n" << t_flag << std::endl;
-
+  ROS_INFO("Initial energy tanks level: [%f %f %f %f %f %f %f] \n",
+           Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
+  ROS_INFO("The trajectory flags are at t = [%f %f %f %f %f %f %f] \n",
+           t_flag(0),t_flag(1),t_flag(2),t_flag(3),t_flag(4),t_flag(5),t_flag(6));
   return true;
 }
 
@@ -629,7 +629,7 @@ void FirstController::update(const ros::Time& /*time*/,
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
     && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open() && 
     dataAnalysis_tau_measured.is_open() && dataAnalysis_tau_desired.is_open() &&
-    dataAnalysis_xyz_ref.is_open() && gripper_flag = 0){ 
+    dataAnalysis_xyz_ref.is_open() && gripper_flag == 0){ 
       dataAnalysis_tau_TB << tau_TB << std::endl;
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
@@ -637,7 +637,7 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_measured << tau_measured << std::endl;
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
       dataAnalysis_xyz_ref << Hv0(0,3) << "\n" << Hv0(1,3) << "\n" << Hv0(2,3) << std::endl;
-      } else ROS_ERORR("Unable to open output txt files!");
+      } else ROS_ERROR("Unable to open output txt files!");
   }
 
   for (size_t i = 0; i < 7; ++i) {
@@ -670,8 +670,8 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   //these messages are useful when using cartesian control only
   if(control_state == 2){
-    std::cout << "Hnv: \n" << Hnv << "\n update calls:\n " << update_calls << std::endl;
-    //std::cout << "Hn0: \n" << Hn0 << "\n update calls:\n " << update_calls << std::endl;
+    ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
+    //ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
   }
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;
   //std::cout << "gripper calls:\n " << gripper_calls << std::endl;
