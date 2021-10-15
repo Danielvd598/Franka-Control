@@ -629,7 +629,8 @@ void FirstController::update(const ros::Time& /*time*/,
     if(dataAnalysis_tau_TB.is_open() && dataAnalysis_tau_TF.is_open()
     && dataAnalysis_dq.is_open() && dataAnalysis_q.is_open() && 
     dataAnalysis_tau_measured.is_open() && dataAnalysis_tau_desired.is_open() &&
-    dataAnalysis_xyz_ref.is_open() && gripper_flag == 0){ 
+    dataAnalysis_xyz_ref.is_open()){ 
+      if(gripper_flag == 0){
       dataAnalysis_tau_TB << tau_TB << std::endl;
       dataAnalysis_tau_TF << tau_TF << std::endl;
       dataAnalysis_dq << dq << std::endl;
@@ -637,7 +638,8 @@ void FirstController::update(const ros::Time& /*time*/,
       dataAnalysis_tau_measured << tau_measured << std::endl;
       dataAnalysis_tau_desired << tau_J_d + gravity << std::endl;
       dataAnalysis_xyz_ref << Hv0(0,3) << "\n" << Hv0(1,3) << "\n" << Hv0(2,3) << std::endl;
-      } else ROS_ERROR("Unable to open output txt files!");
+      }
+    } else std::cerr << "Unable to open output txt files!";
   }
 
   for (size_t i = 0; i < 7; ++i) {
@@ -670,7 +672,8 @@ void FirstController::update(const ros::Time& /*time*/,
   //std::cout << "W0: \n" << W0 << std::endl;
   //these messages are useful when using cartesian control only
   if(control_state == 2){
-    ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
+    ROS_INFO_THROTTLE(0.1,"Update calls: %f", update_calls);
+    ROS_INFO_THROTTLE(0.1,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
     //ROS_INFO_THROTTLE(0.01,"pnv: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
   }
   //std::cout << "tau_TB:\n " << tau_TB << std::endl;

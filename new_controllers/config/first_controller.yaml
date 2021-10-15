@@ -19,10 +19,10 @@ first_controller:
     theta: 0
     psi: 0
     phi: 3.1415
-    accuracy_thr: 0.001 #[m]
+    accuracy_thr: 0.002 #[m]
     kt_modulation_factor: 3000000 #8.0
     ko_modulation_factor: 3000000
-    ktmax: 9000 #maximumum allowable translational stiffness in case of modulating stiffness
+    ktmax: 5000 #maximumum allowable translational stiffness in case of modulating stiffness
     komax: 300 #maximumum allowable rotational stiffness in case of modulating stiffness
     b_modulation_factor: 0.001
     bmax: 20
@@ -43,11 +43,11 @@ first_controller:
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     cycle_wait_period: 3000 #wait period between cycles in milliseconds
-    dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_tau_desired.txt'
-    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_3_var_xyz_ref.txt'
+    dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_tau_desired.txt'
+    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V1_env_4_var_xyz_ref.txt'
