@@ -465,14 +465,28 @@ void FirstController::update(const ros::Time& /*time*/,
 
 //only modulated stiffness when doing cartesian control, otherwise the torque commands
 //will have sudden jumps
-  if(use_modulated_TF && control_state == 2 && gripper_flag == 0){
-    Kt << kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
-          0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
-          0, 0, kt + (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
+  if(use_modulated_TF && control_state == 2 && gripper_flag == 0 
+  ){
+    if(update_calls <= static_cast<int>(t_flag[1]*1000) 
+      && update_calls >= static_cast<int>(t_flag[0]*1000)){
+        Kt << kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
+              0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
+              0, 0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
+    } 
+    else if(update_calls <= static_cast<int>(t_flag[5]*1000) 
+      && update_calls >= static_cast<int>(t_flag[4]*1000)){
+        Kt << kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
+              0, kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
+              0, 0, kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
+    }
+    else Kt << kt, 0, 0,
+               0, kt, 0,
+               0, 0, kt;
     Gt = 0.5*trace(Kt)*I33 - Kt;
-    ROS_INFO_THROTTLE(0.1,"Modulating the stiffness!\n Kt: %f, %f, %f \n Ko: %f, %f, %f",
-              Kt(0,0),Kt(1,1), Kt(2,2),Ko(0,0),Ko(1,1), Ko(2,2));
+    ROS_INFO_THROTTLE(0.1,"The stiffness!\n Kt: %f, %f, %f \n Ko: %f, %f, %f",
+                      Kt(0,0),Kt(1,1), Kt(2,2),Ko(0,0),Ko(1,1), Ko(2,2));
   }
+
   
   mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
   fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
@@ -626,11 +640,11 @@ void FirstController::update(const ros::Time& /*time*/,
     joint_handles_[i].setCommand(tau_cmd(i));
   }
 
-  for (size_t i=0;i<t_flag.size();i++){
+  for (size_t i=1; i<Njoints; i=i+5){ //only for high accuracy parts
     if (update_calls == static_cast<int>(t_flag[i]*1000) && 
         (std::abs(Hnv(0,3)) > accuracy_thr || std::abs(Hnv(1,3)) > accuracy_thr ||
          std::abs(Hnv(2,3)) > accuracy_thr)){
-        ROS_INFO_THROTTLE(0.1,"Accuracy is not sufficient enough at flag point!");
+        ROS_INFO_THROTTLE(0.1,"Accuracy is not sufficient enough at high accuracy points!");
         accuracy_flag = 0; 
         break;
     }
