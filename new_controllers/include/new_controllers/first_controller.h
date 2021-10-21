@@ -88,9 +88,10 @@ class FirstController : public controller_interface::MultiInterfaceController<
   dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path,
   dataAnalysis_xyz_ref_path, dataAnalysis_accuracy_thr_path;
+  double Ts; //sample time
   double kt, ko, b; //impedance control paramaters
   double bdrain; //drainage damping
-  double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
+  double epsP, epsE, eps; //Power and Energy margins for collision detection/energy tanks
   double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
   double Ek; //current total kinetic energy of the robot
   double kp, kd; //PD join space control parameters
@@ -99,7 +100,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
   double kt_modulation_factor, ko_modulation_factor, ktmax, komax, b_modulation_factor, bmax; //adjusting modulated impedance
   ros::WallTime t1, t2; //timer between collision detection and energy draining
-  Eigen::Matrix<double, 7, 1> Etank, Etank_margin; 
+  Eigen::Matrix<double, 7, 1> Etank_init, Etank, Etank_margin, d, d_prev, dddt; //Energy tank and its states 
   Eigen::Matrix<double, 7, 2> x; //low-pass filter state
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;

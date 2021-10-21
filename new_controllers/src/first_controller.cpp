@@ -68,6 +68,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
+  node_handle.getParam("/first_controller/Ts",Ts);
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
   node_handle.getParam("/first_controller/use_dynamic_injection",use_dynamic_injection);
   node_handle.getParam("/first_controller/use_TB",use_TB);
@@ -83,6 +84,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/komax",komax);
   node_handle.getParam("/first_controller/b_modulation_factor",b_modulation_factor);
   node_handle.getParam("/first_controller/bmax",bmax);
+  node_handle.getParam("/first_controller/eps",eps);
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
@@ -309,10 +311,16 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     }
   }
 
-  Etank = 0.001 * P_opt.rowwise().sum();
-  if(use_dynamic_injection){
-    Etank = Etank*epsE;
-  } else Etank = Etank + epsE*Etank;
+  //energy tanks initialization
+  Etank_init = Ts * P_opt.rowwise().sum();
+  for(size_t i=0; i<Njoints; i++){
+    if(!use_dynamic_injection){
+      d_prev[i] = std::sqrt(2*(Etank_init[i]+epsE));
+    } else d_prev[i] = std::sqrt(2*epsE);
+    d[i] = d_prev[i];
+    Etank[i]  = 0.5*d[i]*d[i];
+  }
+
   ROS_INFO("Initial energy tanks level: [%f %f %f %f %f %f %f] \n",
            Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
   ROS_INFO("The trajectory flags are at t = [%f %f %f %f %f %f %f] \n",
@@ -469,9 +477,12 @@ void FirstController::update(const ros::Time& /*time*/,
   ){
     if(update_calls <= static_cast<int>(t_flag[1]*1000) 
       && update_calls >= static_cast<int>(t_flag[0]*1000)){
-        Kt << kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
-              0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
-              0, 0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
+        Kt << kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
+              0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
+              0, 0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
     } 
     else if(update_calls <= static_cast<int>(t_flag[5]*1000) 
       && update_calls >= static_cast<int>(t_flag[4]*1000)){
@@ -545,13 +556,8 @@ void FirstController::update(const ros::Time& /*time*/,
   if (control_state==2 && gripper_flag == 0){// only update when performing trajectory
     for (size_t i=0;i<Njoints;i++){
       P_meas(i) = tau_measured(i) * dq(i); // calculate measured mechanical power
-      if(use_dynamic_injection){
-        Etank(i) = Etank(i) + P_opt(i,update_calls);   // fill the tanks
-      } 
-      // empty the tanks based on measured torque and joint velocities
-      Etank(i) = Etank(i) - P_meas(i);
       //check if a tank is empty
-      if(Etank(i) <= 0 && !fail){
+      if(Etank(i) <= eps && !fail){
         fail = true;
         ROS_WARN_THROTTLE(0.1,"Energy tank of joint %f is empty!",(i+1));
         t1 = ros::WallTime::now();
@@ -611,6 +617,27 @@ void FirstController::update(const ros::Time& /*time*/,
   if(control_state==4 || gripper_flag != 0){ //if gripper is moving don't send torque commands
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
+
+  for(size_t i=0; i<Njoints; i++){
+    if(control_state == 2){
+      double u; //control variable
+      u = -tau_cmd[i]/d[i];
+      dddt[i] = u*dq[i];
+      tau_cmd[i] = -u*d[i];
+      d[i] = d_prev[i] + dddt[i]*Ts;
+      if(use_dynamic_injection && gripper_flag == 0 && accuracy_flag == 1){
+        d[i] = d[i] + sqrt(2*P_opt(update_calls+1,i)*Ts);
+      }
+      Etank[i] = 0.5*d[i]*d[i];
+    }
+  }
+  if(control_state == 2){
+  ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
+                    Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
+  ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
+                    d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
+  }
+  d_prev = d; //save previous state for next run
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
 
