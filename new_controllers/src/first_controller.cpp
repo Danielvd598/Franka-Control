@@ -324,7 +324,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   P_opt.conservativeResize(7,optimisation_length);
   for (size_t i=0;i<Njoints;i++){
     for (size_t j=0;j<optimisation_length;j++){
-      P_opt(i,j) = std::abs(tauc_gravity_mat(i,j) * qdot_mat(i,j)); // THIS IS INCORRECT NEEDS STATES 
+      P_opt(i,j) = tauc_gravity_mat(i,j) * qdot_mat(i,j); // THIS IS INCORRECT NEEDS STATES 
     }
   }
 
@@ -501,7 +501,7 @@ void FirstController::update(const ros::Time& /*time*/,
       } 
     else if(update_calls <= static_cast<int>(t_flag[5]*1000) 
       && update_calls >= static_cast<int>(t_flag[4]*1000)){
-        k_temp + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+        k_temp + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*
           (kmax-k)/(1 + k_modulation_factor*pow(std::abs(Hnv(0,3)),3));
       }
       else k_temp = k;
@@ -639,16 +639,16 @@ void FirstController::update(const ros::Time& /*time*/,
       tau_cmd[i] = -u*d[i];
       d[i] = d_prev[i] + dddt[i]*Ts;
       if(use_dynamic_injection && gripper_flag == 0 && accuracy_flag == 1){
-        d[i] = d[i] + sqrt(2*P_opt(update_calls+1,i)*Ts);
+        d[i] = d[i] + P_opt(update_calls+1,i)*Ts/d[i];
       }
       Etank[i] = 0.5*d[i]*d[i];
     }
   }
   if(control_state == 2){
-  //ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
-  //                  Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
-  //ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
-  //                  d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
+  ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
+                   Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
+  ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
+                   d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
   }
   d_prev = d; //save previous state for next run
 

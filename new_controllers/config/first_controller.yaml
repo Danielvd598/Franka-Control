@@ -14,9 +14,9 @@ first_controller:
     b: 4
     bdrain: 40.0 #drainage damping
     alpha: 1 #low pass filter constant
-    accuracy_thr: 0.001 #[m]
+    accuracy_thr: 0.002 #[m]
     k_modulation_factor: 3000000 #8.0
-    kmax: 1000 #maximumum allowable translational stiffness in case of modulating stiffness
+    kmax: 500 #maximumum allowable translational stiffness in case of modulating stiffness
     b_modulation_factor: 0.001
     bmax: 20
     eps: 0.01 #Energy minimum in tanks [J]
