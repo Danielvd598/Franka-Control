@@ -72,16 +72,13 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
   node_handle.getParam("/first_controller/use_dynamic_injection",use_dynamic_injection);
   node_handle.getParam("/first_controller/use_TB",use_TB);
-  node_handle.getParam("/first_controller/kt",kt);
-  node_handle.getParam("/first_controller/ko",ko);
+  node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
   node_handle.getParam("/first_controller/bdrain",bdrain);
   node_handle.getParam("/first_controller/alpha",alpha);
   node_handle.getParam("/first_controller/accuracy_thr",accuracy_thr);
-  node_handle.getParam("/first_controller/ko_modulation_factor",ko_modulation_factor);
-  node_handle.getParam("/first_controller/kt_modulation_factor",kt_modulation_factor);
-  node_handle.getParam("/first_controller/ktmax",ktmax);
-  node_handle.getParam("/first_controller/komax",komax);
+  node_handle.getParam("/first_controller/k_modulation_factor",k_modulation_factor);
+  node_handle.getParam("/first_controller/kmax",kmax);
   node_handle.getParam("/first_controller/b_modulation_factor",b_modulation_factor);
   node_handle.getParam("/first_controller/bmax",bmax);
   node_handle.getParam("/first_controller/eps",eps);
@@ -94,6 +91,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/t_flag_path", t_flag_path);
   node_handle.getParam("/first_controller/qdot_path", qdot_path);
   node_handle.getParam("/first_controller/tauc_gravity_path", tauc_gravity_path);
+  node_handle.getParam("/first_controller/q_path", q_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
@@ -112,14 +110,13 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   I33 << 1, 0, 0,
          0, 1, 0,
          0, 0, 1;
-  Ko << ko, 0, 0,
-       0, ko, 0,
-       0, 0, ko;
-  Kt << kt, 0, 0,
-       0, kt, 0,
-       0, 0, kt;
-  Go = 0.5*trace(Ko)*I33 - Ko;
-  Gt = 0.5*trace(Kt)*I33 - Kt;
+  K <<  k,0,0,0,0,0,0,
+        0,k,0,0,0,0,0,
+        0,0,k,0,0,0,0,
+        0,0,0,k,0,0,0,
+        0,0,0,0,k,0,0,
+        0,0,0,0,0,k,0,
+        0,0,0,0,0,0,k;
   B << b, 0, 0, 0, 0, 0, 0,
        0, b, 0, 0, 0, 0, 0,
        0, 0, b, 0, 0, 0, 0,
@@ -239,6 +236,27 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   } 
   inFile.close();
 
+  //read optimised joint positions
+  inFile.open(q_path);
+  if(!inFile) {
+    std::cerr << "Unable to open q txt file!";
+    exit(1);
+  }
+  num = 0.0;
+  while (inFile >> num){
+    q_index.push_back(num);
+  }
+  q_mat.conservativeResize(7,optimisation_length);
+  for(size_t i=0;i<(optimisation_length-1)*Njoints;i=i+Njoints){
+    q_mat.col(i/Njoints) << q_index[i],q_index[i+1], 
+                        q_index[i+2],
+                        q_index[i+3], 
+                        q_index[i+4], 
+                        q_index[i+5],
+                        q_index[i+6]; 
+  } 
+  inFile.close();
+
   //read desired configuration data
   inFile.open(Hv0_path);
   if(!inFile) {
@@ -295,8 +313,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
             t_flag_index[4], t_flag_index[5], t_flag_index[6];
 
   trajectory_state = 0;
-  ko_modulation_counter = 0;
-  kt_modulation_counter = 0;
+  k_modulation_counter = 0;
   update_calls = 0;
   gripper_calls = 0;
   gripper_flag = 0;
@@ -392,7 +409,7 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1> > dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1> > gravity(gravity_array.data());
   Eigen::VectorXd tau_d(7),tau_TF(7),tau_TB(7),desired_force_torque(6), tau_cmd(7), 
-  tau_ext(7), dq_ref(7);
+  tau_ext(7), dq_ref(7), q_ref(7);
   desired_force_torque.setZero();
 
   Eigen::VectorXd pn0(3), pnv(3), mn(3), fn(3), Wn(6), W0(6);
@@ -442,6 +459,7 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_TB = tau_TB_mat.col(update_calls);  //determine the Task-Based torque
     Hv0 = Hv0_matrices[update_calls].H;
     dq_ref = qdot_mat.col(update_calls);
+    q_ref = q_mat.col(update_calls);
   } else { //no TB torque
     tau_TB << 0,0,0,0,0,0,0;
     Hv0 = Hv0_matrices[optimisation_length - 1].H;
@@ -475,37 +493,32 @@ void FirstController::update(const ros::Time& /*time*/,
 //will have sudden jumps
   if(use_modulated_TF && control_state == 2 && gripper_flag == 0 
   ){
+    double k_temp;
     if(update_calls <= static_cast<int>(t_flag[1]*1000) 
       && update_calls >= static_cast<int>(t_flag[0]*1000)){
-        Kt << kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
-          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
-              0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
-          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
-              0, 0, kt + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
-          (ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
-    } 
+        k_temp = k + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+          (kmax-k)/(1 + k_modulation_factor*pow(std::abs(Hnv(0,3)),3));
+      } 
     else if(update_calls <= static_cast<int>(t_flag[5]*1000) 
       && update_calls >= static_cast<int>(t_flag[4]*1000)){
-        Kt << kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(0,3)),3)), 0 ,0,
-              0, kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(1,3)),3)), 0,
-              0, 0, kt + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*(ktmax-kt)/(1 + kt_modulation_factor*pow(std::abs(Hnv(2,3)),3));
-    }
-    else Kt << kt, 0, 0,
-               0, kt, 0,
-               0, 0, kt;
-    Gt = 0.5*trace(Kt)*I33 - Kt;
-    ROS_INFO_THROTTLE(0.1,"The stiffness!\n Kt: %f, %f, %f \n Ko: %f, %f, %f",
-                      Kt(0,0),Kt(1,1), Kt(2,2),Ko(0,0),Ko(1,1), Ko(2,2));
-  }
+        k_temp + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
+          (kmax-k)/(1 + k_modulation_factor*pow(std::abs(Hnv(0,3)),3));
+      }
+      else k_temp = k;
+    K << k_temp,0,0,0,0,0,0,
+        0,k_temp,0,0,0,0,0,
+        0,0,k_temp,0,0,0,0,
+        0,0,0,k_temp,0,0,0,
+        0,0,0,0,k_temp,0,0,
+        0,0,0,0,0,k_temp,0,
+        0,0,0,0,0,0,k_temp;
 
-  
-  mn_skew = -2*As(Go*Rnv) - As(Gt*Rvn*pnv_skew*pnv_skew*Rnv);
-  fn_skew = -Rvn*As(Gt*pnv_skew)*Rnv - As(Gt*Rvn*pnv_skew*Rnv);
-  fn << fn_skew(2,1), fn_skew(0,2), fn_skew(1,0);
-  mn << mn_skew(2,1), mn_skew(0,2), mn_skew(1,0);
-  Wn << mn, fn;
-  W0 = Adjoint(H0n).transpose() * Wn;
-  tau_TF = GeoJac.transpose() * W0 - (B * (dq - dq_ref));
+    ROS_INFO_THROTTLE(0.1,"The stiffness!\n k: %f",K(1,1));
+  }
+  tau_TF = K*(q_ref-q) - (B * (dq - dq_ref));
+  // ROS_INFO_THROTTLE(0.1,"TF torque!\n: %f\n%f\n%f\n%f\n%f\n%f\n%f\n",
+  // tau_TF(0),tau_TF(1),tau_TF(2),tau_TF(3),tau_TF(4),tau_TF(5),tau_TF(6));
+
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
@@ -632,10 +645,10 @@ void FirstController::update(const ros::Time& /*time*/,
     }
   }
   if(control_state == 2){
-  ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
-                    Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
-  ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
-                    d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
+  //ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
+  //                  Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
+  //ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
+  //                  d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
   }
   d_prev = d; //save previous state for next run
 

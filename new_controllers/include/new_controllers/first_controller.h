@@ -81,15 +81,15 @@ class FirstController : public controller_interface::MultiInterfaceController<
    * control_state = 4: compliance
    * */
   int control_state; 
-  int ko_modulation_counter, kt_modulation_counter, b_modulation_counter; // counts how long the stiffness is modulated
+  int k_modulation_counter, b_modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length; 
   bool use_TB, dataPrint, use_modulated_TF, use_dynamic_injection, fail, drained;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, tauc_gravity_path,
-  dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
+  q_path, dataAnalysis_tau_TB_path, dataAnalysis_tau_TF_path, dataAnalysis_dq_path, 
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path,
   dataAnalysis_xyz_ref_path, dataAnalysis_accuracy_thr_path;
   double Ts; //sample time
-  double kt, ko, b; //impedance control paramaters
+  double k, b; //impedance control paramaters
   double bdrain; //drainage damping
   double epsP, epsE, eps; //Power and Energy margins for collision detection/energy tanks
   double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
@@ -98,14 +98,13 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double alpha; //lowpassfilter constant
   double a4; double a7; double d1; double d3; double d5; double dF; double dGripper;
   double accuracy_thr; //accuracy necessary before grabbing/releasing peg
-  double kt_modulation_factor, ko_modulation_factor, ktmax, komax, b_modulation_factor, bmax; //adjusting modulated impedance
+  double k_modulation_factor, kmax, b_modulation_factor, bmax; //adjusting modulated impedance
   ros::WallTime t1, t2; //timer between collision detection and energy draining
   Eigen::Matrix<double, 7, 1> Etank_init, Etank, Etank_margin, d, d_prev, dddt; //Energy tank and its states 
   Eigen::Matrix<double, 7, 2> x; //low-pass filter state
   Eigen::Matrix<double, 3, 1> w4, r4, w5, r5, w7, r7;
   Eigen::Matrix<double, 3, 3> I33;
-  Eigen::Matrix<double, 3, 3> Ko;
-  Eigen::Matrix<double, 3, 3> Kt;
+  Eigen::Matrix<double, 7, 7> K;
   Eigen::Matrix<double, 3, 3> Go;
   Eigen::Matrix<double, 3, 3> Gt;
   Eigen::Matrix<double, 4, 4> Hv0, Hv0_optimised;
@@ -121,8 +120,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
   size_t update_calls; //Task-Based and trajectory indices
   size_t gripper_calls; //how often the gripper is called to do something
   std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index, qdot_index, 
-  tauc_gravity_index;
-  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat, qdot_mat, tauc_gravity_mat;
+  tauc_gravity_index, q_index;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat, qdot_mat, tauc_gravity_mat, q_mat;
   Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt; //Power consumption based on optimisation
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured, dataAnalysis_tau_desired,

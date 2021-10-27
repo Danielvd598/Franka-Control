@@ -10,16 +10,13 @@ first_controller:
         - panda_joint6
         - panda_joint7
     Ts: 0.001 #sample time
-    kt: 400 #400
-    ko: 200 #400
+    k: 100 #400
     b: 4
     bdrain: 40.0 #drainage damping
     alpha: 1 #low pass filter constant
-    accuracy_thr: 0.002 #[m]
-    kt_modulation_factor: 3000000 #8.0
-    ko_modulation_factor: 3000000
-    ktmax: 5000 #maximumum allowable translational stiffness in case of modulating stiffness
-    komax: 300 #maximumum allowable rotational stiffness in case of modulating stiffness
+    accuracy_thr: 0.001 #[m]
+    k_modulation_factor: 3000000 #8.0
+    kmax: 1000 #maximumum allowable translational stiffness in case of modulating stiffness
     b_modulation_factor: 0.001
     bmax: 20
     eps: 0.01 #Energy minimum in tanks [J]
@@ -29,12 +26,13 @@ first_controller:
     use_TB: false #wether or not we want to include feed-forward 
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_dynamic_injection: true #bool for dynamically injection energy in the energy tanks
-    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_TB_torques.txt'
-    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_Hn0.txt'
-    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_q0.txt'
-    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_t_flag.txt'
-    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_qdot.txt'
-    tauc_gravity_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/Venv_height_test_tauc_gravity.txt'
+    torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_TB_torques.txt'
+    Hv0_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_Hn0.txt'
+    qi_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_q0.txt'
+    t_flag_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_t_flag.txt'
+    qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_qdot.txt'
+    tauc_gravity_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_tauc_gravity.txt'
+    q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V7_var_env_q.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
     dataPrint: false
