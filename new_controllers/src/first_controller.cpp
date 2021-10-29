@@ -72,6 +72,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/use_modulated_TF",use_modulated_TF);
   node_handle.getParam("/first_controller/use_dynamic_injection",use_dynamic_injection);
   node_handle.getParam("/first_controller/use_TB",use_TB);
+  node_handle.getParam("/first_controller/use_prev_power_data",use_prev_power_data);
   node_handle.getParam("/first_controller/k",k);
   node_handle.getParam("/first_controller/b",b);
   node_handle.getParam("/first_controller/bdrain",bdrain);
@@ -92,6 +93,9 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/qdot_path", qdot_path);
   node_handle.getParam("/first_controller/tauc_gravity_path", tauc_gravity_path);
   node_handle.getParam("/first_controller/q_path", q_path);
+  node_handle.getParam("/first_controller/prev_torque_path", prev_torque_path);
+  node_handle.getParam("/first_controller/prev_dq_path", prev_dq_path);
+  node_handle.getParam("/first_controller/prev_q_path", prev_q_path);
   node_handle.getParam("/first_controller/kp", kp);
   node_handle.getParam("/first_controller/kd", kd);
   node_handle.getParam("/first_controller/dataPrint", dataPrint);
@@ -299,6 +303,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     Hv0_matrices[i].H = Hv0_optimised;
   } 
 
+  //read time flags data
   inFile.open(t_flag_path);
     if(!inFile) {
       std::cerr << "Unable to open t_flag txt file!";
@@ -311,6 +316,73 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   inFile.close();
   t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3],
             t_flag_index[4], t_flag_index[5], t_flag_index[6];
+
+
+
+
+  // read previous measured torque, joint position and velocity data
+  if(use_prev_power_data){
+    //determine start of previous trajectory based on joint torques
+    previnFile.open(prev_q_path);
+    if(!previnFile) {
+      std::cerr << "Unable to open prev q txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while(previnFile >> num){
+      prev_q_index.push_back(num);
+    }
+    previnFile.close();
+    //determine length of previous trajectory data
+    prev_traj_length = prev_q_index.size()/Njoints;
+
+    for(size_t i=0;i<prev_traj_length;i=i+Njoints){
+      if (
+         (std::abs(prev_q_index[i]) <= std::abs(qi[i+0]+0.001) &&
+           std::abs(prev_q_index[i+1]) <= std::abs(qi[i+1]+0.001) &&
+           std::abs(prev_q_index[i+2]) <= std::abs(qi[i+2]+0.001) &&
+           std::abs(prev_q_index[i+3]) <= std::abs(qi[i+3]+0.001) &&
+           std::abs(prev_q_index[i+4]) <= std::abs(qi[i+4]+0.001) &&
+           std::abs(prev_q_index[i+5]) <= std::abs(qi[i+5]+0.001) &&
+           std::abs(prev_q_index[i+6]) <= std::abs(qi[i+6]+0.001) 
+         ) && 
+         (std::abs(prev_q_index[i]) >= std::abs(qi[i+0]-0.001) &&
+           std::abs(prev_q_index[i+1]) >= std::abs(qi[i+1]-0.001) &&
+           std::abs(prev_q_index[i+2]) >= std::abs(qi[i+2]-0.001) &&
+           std::abs(prev_q_index[i+3]) >= std::abs(qi[i+3]-0.001) &&
+           std::abs(prev_q_index[i+4]) >= std::abs(qi[i+4]-0.001) &&
+           std::abs(prev_q_index[i+5]) >= std::abs(qi[i+5]-0.001) &&
+           std::abs(prev_q_index[i+6]) >= std::abs(qi[i+6]-0.001) 
+         )
+        ){
+          l = (i-1)/Njoints;
+          ROS_INFO("found previous starting trajectory time at: %f",l);
+        }
+    }
+        
+    // inFile.open(prev_torque_path);
+    // if(!inFile) {
+    //   std::cerr << "Unable to open prev torque txt file!";
+    //   exit(1);
+    // }
+    // num = 0.0;
+    // while (inFile >> num){
+    //   prev_torque_index.push_back(num);
+    // }
+    // // determine the total length of the previous measurement
+    // optimisation_length = tau_TB_index.size()/Njoints;
+    // tau_TB_mat.conservativeResize(7,optimisation_length);
+    // ROS_INFO("total optimisation length [ms]: %d", optimisation_length);
+    // for(size_t i=0;i<optimisation_length;i++){   
+    //   tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
+    //                         tau_TB_index[2*optimisation_length+i],
+    //                         tau_TB_index[3*optimisation_length+i], 
+    //                         tau_TB_index[4*optimisation_length+i], 
+    //                         tau_TB_index[5*optimisation_length+i],
+    //                         tau_TB_index[6*optimisation_length+i]; 
+    // } 
+    //inFile.close();
+  }
 
   trajectory_state = 0;
   k_modulation_counter = 0;
