@@ -416,6 +416,17 @@ void FirstController::update(const ros::Time& /*time*/,
   Eigen::MatrixXd H0n(4,4), Hnv(4,4), Rn0(3,3), Rnv(3,3), Rvn(3,3), pnv_skew(3,3),
    mn_skew(3,3), fn_skew(3,3), GeoJac(6,7);
 
+  ROS_INFO_THROTTLE(0.1,"Update calls: %d", update_calls);
+
+
+  if(control_state == 2){
+  ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
+                   Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
+  //ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
+  //                d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
+  }
+
+
   //Define all twists for the Geometric Jacobian
   Eigen::VectorXd T1(6), T2(6), T3(6), T4(6), T5(6), T6(6), T7(6);
 
@@ -497,12 +508,16 @@ void FirstController::update(const ros::Time& /*time*/,
     if(update_calls <= static_cast<int>(t_flag[1]*1000) 
       && update_calls >= static_cast<int>(t_flag[0]*1000)){
         k_temp = k + ((update_calls-(t_flag[0]*1000))/((t_flag[1]-t_flag[0])*1000))*
-          (kmax-k)/(1 + k_modulation_factor*pow(std::abs(Hnv(0,3)),3));
+          (kmax-k)/(1 + k_modulation_factor*
+          pow(sqrt(pow(std::abs(Hnv(0,3)),2) + pow(std::abs(Hnv(1,3)),2) + 
+          pow(std::abs(Hnv(2,3)),2)),3));
       } 
     else if(update_calls <= static_cast<int>(t_flag[5]*1000) 
-      && update_calls >= static_cast<int>(t_flag[4]*1000)){
-        k_temp + ((update_calls-(t_flag[4]*1000))/((t_flag[5]-t_flag[4])*1000))*
-          (kmax-k)/(1 + k_modulation_factor*pow(std::abs(Hnv(0,3)),3));
+      && update_calls >= static_cast<int>(t_flag[3]*1000)){
+        k_temp = k + ((update_calls-(t_flag[3]*1000))/((t_flag[5]-t_flag[3])*1000))*
+          (kmax-k)/(1 + k_modulation_factor*
+          pow(sqrt(pow(std::abs(Hnv(0,3)),2) + pow(std::abs(Hnv(1,3)),2) + 
+          pow(std::abs(Hnv(2,3)),2)),3));
       }
       else k_temp = k;
     K << k_temp,0,0,0,0,0,0,
@@ -516,9 +531,6 @@ void FirstController::update(const ros::Time& /*time*/,
     ROS_INFO_THROTTLE(0.1,"The stiffness!\n k: %f",K(1,1));
   }
   tau_TF = K*(q_ref-q) - (B * (dq - dq_ref));
-  // ROS_INFO_THROTTLE(0.1,"TF torque!\n: %f\n%f\n%f\n%f\n%f\n%f\n%f\n",
-  // tau_TF(0),tau_TF(1),tau_TF(2),tau_TF(3),tau_TF(4),tau_TF(5),tau_TF(6));
-
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
@@ -547,6 +559,14 @@ void FirstController::update(const ros::Time& /*time*/,
     gripper_status.conservativeResize(gripper_calls+1,1);
     gripper_status.row(gripper_calls) << 2;
   } 
+  if(update_calls ==  static_cast<int>(t_flag[5]*1000) && 
+  std::abs(Hnv(0,3)) > 0.5*accuracy_thr && std::abs(Hnv(1,3)) > 0.5*accuracy_thr 
+  && std::abs(Hnv(2,3)) > 0.5*accuracy_thr){
+    ROS_ERROR("accuracy is not good enough for inserting the peg,switching the failure mode");
+    ROS_ERROR("accuracy is: %f %f %f",std::abs(Hnv(0,3)),std::abs(Hnv(1,3)),std::abs(Hnv(2,3)));
+    fail = true;
+  }
+
   if (update_calls ==  static_cast<int>(t_flag[6]*1000) && 
   std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
   && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
@@ -572,7 +592,8 @@ void FirstController::update(const ros::Time& /*time*/,
       //check if a tank is empty
       if(Etank(i) <= eps && !fail){
         fail = true;
-        ROS_WARN_THROTTLE(0.1,"Energy tank of joint %f is empty!",(i+1));
+        ROS_WARN_THROTTLE(0.1,"Energy tank of joint %d is empty! Etank: %f",
+        (i+1), Etank(i));
         t1 = ros::WallTime::now();
       }
     }
@@ -631,25 +652,30 @@ void FirstController::update(const ros::Time& /*time*/,
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
   }
 
+  //Energy tanks
   for(size_t i=0; i<Njoints; i++){
     if(control_state == 2){
       double u; //control variable
-      u = -tau_cmd[i]/d[i];
+      u = -(tau_cmd[i]+gravity[i])/d[i];
       dddt[i] = u*dq[i];
-      tau_cmd[i] = -u*d[i];
+      tau_cmd[i] = -u*d[i] - gravity[i];
       d[i] = d_prev[i] + dddt[i]*Ts;
       if(use_dynamic_injection && gripper_flag == 0 && accuracy_flag == 1){
-        d[i] = d[i] + P_opt(update_calls+1,i)*Ts/d[i];
+        d[i] = d[i] + P_opt(i,update_calls+1)*Ts/d[i];
       }
       Etank[i] = 0.5*d[i]*d[i];
     }
   }
-  if(control_state == 2){
-  ROS_INFO_THROTTLE(0.1,"Energy Tanks:\n %f %f %f %f %f %f %f",
-                   Etank(0),Etank(1),Etank(2),Etank(3),Etank(4),Etank(5),Etank(6));
-  ROS_INFO_THROTTLE(0.1,"Energy Tanks States:\n %f %f %f %f %f %f %f",
-                   d(0),d(1),d(2),d(3),d(4),d(5),d(6));        
-  }
+  // ROS_INFO_THROTTLE(0.1,"Popt injected: \n %f %f %f %f %f %f %f",
+  // P_opt(0,update_calls+1),P_opt(1,update_calls+1),P_opt(2,update_calls+1),
+  // P_opt(3,update_calls+1),P_opt(4,update_calls+1),P_opt(5,update_calls+1),
+  // P_opt(6,update_calls+1));
+  // ROS_INFO_THROTTLE(0.1,"joint velocities:\n %f %f %f %f %f %f %f",
+  // dq(0),dq(1),dq(2),dq(3),dq(4),dq(5),dq(6));
+  // ROS_INFO_THROTTLE(0.1,"output torque:\n %f %f %f %f %f %f %f",
+  // tau_J_d(0) + gravity(0),tau_J_d(1) + gravity(1),tau_J_d(2) + gravity(2),tau_J_d(3) + gravity(3),
+  // tau_J_d(4) + gravity(4),tau_J_d(5) + gravity(5),tau_J_d(6) + gravity(6));
+
   d_prev = d; //save previous state for next run
 
   tau_cmd << saturateTorqueRate(tau_cmd, tau_J_d);
@@ -693,9 +719,7 @@ void FirstController::update(const ros::Time& /*time*/,
 
 
   if(control_state == 2){
-    ROS_INFO_THROTTLE(0.1,"Update calls: %d", update_calls);
     ROS_INFO_THROTTLE(0.1,"pnv: \n[%f \n %f \n %f]", Hnv(0,3),Hnv(1,3),Hnv(2,3));
-
   }
   //ROS_INFO_THROTTLE(0.1,"pn0: \n[%f \n %f \n %f]", Hn0(0,3),Hn0(1,3),Hn0(2,3));
 

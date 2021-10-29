@@ -8,4 +8,4 @@ default_grasp_epsilon:
   outer: 0.005 # [m]
 grasp_width: 0.002 #[m]
 release_width: 0.07 #[m]
-gripper_speed: 0.1 #[m/s]
+gripper_speed: 0.10 #[m/s]
