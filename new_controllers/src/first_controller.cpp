@@ -564,6 +564,7 @@ void FirstController::update(const ros::Time& /*time*/,
   && std::abs(Hnv(2,3)) > 0.5*accuracy_thr){
     ROS_ERROR("accuracy is not good enough for inserting the peg,switching the failure mode");
     ROS_ERROR("accuracy is: %f %f %f",std::abs(Hnv(0,3)),std::abs(Hnv(1,3)),std::abs(Hnv(2,3)));
+    accuracy_flag = 0;
     fail = true;
   }
 
@@ -615,7 +616,7 @@ void FirstController::update(const ros::Time& /*time*/,
     {
       double error = qi[i]-q[i];
       if(std::abs(error)>0.001){
-        ROS_WARN_THROTTLE(0.1,"\n Error is not small enough:\n error: %f \n joint: %f",error,i+1);
+        ROS_WARN_THROTTLE(0.1,"\n Error is not small enough:\n error: %f \n joint: %d",error,i+1);
         control_state = 1;
         break;
       }
