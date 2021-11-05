@@ -765,9 +765,9 @@ void FirstController::update(const ros::Time& /*time*/,
   for(size_t i=0; i<Njoints; i++){
     if(control_state == 2){
       double u; //control variable
-      u = -(tau_cmd[i]+gravity[i])/d[i];
+      u = -(tau_cmd[i])/d[i];
       dddt[i] = u*dq[i];
-      tau_cmd[i] = -u*d[i] - gravity[i];
+      tau_cmd[i] = -u*d[i];
       d[i] = d_prev[i] + dddt[i]*Ts;
       if(use_dynamic_injection && accuracy_flag == 1){
         d[i] = d[i] + P_opt(i,update_calls+1)*Ts/d[i];
