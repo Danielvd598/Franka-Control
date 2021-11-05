@@ -317,9 +317,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   t_flag << t_flag_index[0], t_flag_index[1], t_flag_index[2], t_flag_index[3],
             t_flag_index[4], t_flag_index[5], t_flag_index[6];
 
-
-
-
   // read previous measured torque, joint position and velocity data
   if(use_prev_power_data){
     //determine start of previous trajectory based on joint torques
@@ -335,6 +332,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     previnFile.close();
     //determine length of previous trajectory data
     prev_traj_length = prev_q_index.size()/Njoints;
+    ROS_INFO("Previous data length: %d", prev_traj_length);
 
     for(size_t i=0;i<prev_traj_length*Njoints;i=i+Njoints){
      
@@ -360,35 +358,54 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
           ROS_INFO("found previous starting trajectory time at: %d",l);
           break;
         }
-        else if(i == prev_traj_length*Njoints){
-          ROS_ERROR("Could not find previous starting trajectory!");
-          exit(1);
-        }
-        
+      else if(i == prev_traj_length*Njoints){
+        ROS_ERROR("Could not find previous starting trajectory!");
+        exit(1);
+      }
+    } 
+    ROS_INFO("Previous trajectory length: %d", prev_traj_length-l);
+
+    //read previous torque data
+    previnFile.open(prev_torque_path);
+    if(!previnFile) {
+      std::cerr << "Unable to open prev torque txt file!";
+      exit(1);
     }
-        
-    // inFile.open(prev_torque_path);
-    // if(!inFile) {
-    //   std::cerr << "Unable to open prev torque txt file!";
-    //   exit(1);
-    // }
-    // num = 0.0;
-    // while (inFile >> num){
-    //   prev_torque_index.push_back(num);
-    // }
-    // // determine the total length of the previous measurement
-    // optimisation_length = tau_TB_index.size()/Njoints;
-    // tau_TB_mat.conservativeResize(7,optimisation_length);
-    // ROS_INFO("total optimisation length [ms]: %d", optimisation_length);
-    // for(size_t i=0;i<optimisation_length;i++){   
-    //   tau_TB_mat.col(i) << tau_TB_index[i], tau_TB_index[optimisation_length+i], 
-    //                         tau_TB_index[2*optimisation_length+i],
-    //                         tau_TB_index[3*optimisation_length+i], 
-    //                         tau_TB_index[4*optimisation_length+i], 
-    //                         tau_TB_index[5*optimisation_length+i],
-    //                         tau_TB_index[6*optimisation_length+i]; 
-    // } 
-    //inFile.close();
+    num = 0.0;
+    while (previnFile >> num){
+      prev_torque_index.push_back(num);
+    }
+    prev_torque_mat.conservativeResize(7,prev_traj_length);
+    for(size_t i=l*Njoints;i<(prev_traj_length-1)*Njoints;i=i+Njoints){   
+      prev_torque_mat.col(i/Njoints - l) << prev_torque_index[i], prev_torque_index[i+1], 
+                            prev_torque_index[i+2],
+                            prev_torque_index[i+3], 
+                            prev_torque_index[i+4], 
+                            prev_torque_index[i+5],
+                            prev_torque_index[i+6];
+    } 
+    previnFile.close();
+
+    //read optimised joint positions
+    previnFile.open(prev_dq_path);
+    if(!previnFile) {
+      std::cerr << "Unable to open previous dq txt file!";
+      exit(1);
+    }
+    num = 0.0;
+    while (previnFile >> num){
+      prev_dq_index.push_back(num);
+    }
+    prev_dq_mat.conservativeResize(7,prev_traj_length);
+    for(size_t i=l*Njoints;i<(prev_traj_length-1)*Njoints;i=i+Njoints){
+      prev_dq_mat.col(i/Njoints - l) << prev_dq_index[i],prev_dq_index[i+1], 
+                          prev_dq_index[i+2],
+                          prev_dq_index[i+3], 
+                          prev_dq_index[i+4], 
+                          prev_dq_index[i+5],
+                          prev_dq_index[i+6]; 
+    } 
+    previnFile.close();
   }
 
   trajectory_state = 0;
@@ -406,6 +423,30 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       P_opt(i,j) = tauc_gravity_mat(i,j) * qdot_mat(i,j); // THIS IS INCORRECT NEEDS STATES 
     }
   }
+  ROS_INFO("optimal power at t = 5: \n%f \n%f \n%f \n%f \n%f \n%f \n%f",
+  P_opt(0,5000),P_opt(1,5000),P_opt(2,5000),P_opt(3,5000),
+  P_opt(4,5000),P_opt(5,5000),P_opt(6,5000));
+
+  //if using previous trajectory data overwrite the P_opt
+  if(use_prev_power_data){
+    P_opt.conservativeResize(0,0);
+    P_opt.conservativeResize(7,prev_traj_length);
+    for (size_t i=0;i<Njoints;i++){
+      for (size_t j=0;j<prev_traj_length;j++){
+        P_opt(i,j) = prev_torque_mat(i,j) * prev_dq_mat(i,j); // THIS IS INCORRECT NEEDS STATES 
+      }
+    }
+  }
+  ROS_INFO("Previous measured power at t = 5:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
+  P_opt(0,5000),P_opt(1,5000),P_opt(2,5000),P_opt(3,5000),
+  P_opt(4,5000),P_opt(5,5000),P_opt(6,5000));
+  ROS_INFO("Previous measured dq at t = 0:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
+  prev_dq_mat(0,000),prev_dq_mat(1,000),prev_dq_mat(2,000),prev_dq_mat(3,000),
+  prev_dq_mat(4,000),prev_dq_mat(5,000),prev_dq_mat(6,000));
+  ROS_INFO("Previous measured torque at t = 5:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
+  prev_torque_mat(0,5000),prev_torque_mat(1,5000),prev_torque_mat(2,5000),prev_torque_mat(3,5000),
+  prev_torque_mat(4,5000),prev_torque_mat(5,5000),prev_torque_mat(6,5000));
+
 
   //energy tanks initialization
   Etank_init = Ts * P_opt.rowwise().sum();

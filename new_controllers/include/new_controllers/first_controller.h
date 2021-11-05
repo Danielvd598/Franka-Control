@@ -126,7 +126,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   std::vector<double> tau_TB_index, Hv0_index, qi_index, t_flag_index, qdot_index, 
   tauc_gravity_index, q_index, prev_torque_index, prev_dq_index, prev_q_index;
   Eigen::Matrix<double, 7, Eigen::Dynamic> tau_TB_mat, qdot_mat, tauc_gravity_mat, q_mat;
-  Eigen::Matrix<double, 7, Eigen::Dynamic> prev_torque_mat, dq_prev_mat, q_prev_mat;
+  Eigen::Matrix<double, 7, Eigen::Dynamic> prev_torque_mat, prev_dq_mat, prev_q_mat;
   Eigen::Matrix<double, 7, Eigen::Dynamic> P_opt, P_prev; //Power consumption based on optimisation
   std::ofstream dataAnalysis_tau_TB, dataAnalysis_tau_TF, dataAnalysis_dq, 
   dataAnalysis_q, dataAnalysis_tau_measured, dataAnalysis_tau_desired,
