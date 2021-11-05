@@ -94,7 +94,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double Ts; //sample time
   double k, b; //impedance control paramaters
   double bdrain; //drainage damping
-  double epsP, epsE, eps; //Power and Energy margins for collision detection/energy tanks
+  double epsP, epsE, eps_low, eps_high; //Power and Energy margins for collision detection/energy tanks
   double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
   double Ek; //current total kinetic energy of the robot
   double kp, kd; //PD join space control parameters

@@ -82,7 +82,8 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/kmax",kmax);
   node_handle.getParam("/first_controller/b_modulation_factor",b_modulation_factor);
   node_handle.getParam("/first_controller/bmax",bmax);
-  node_handle.getParam("/first_controller/eps",eps);
+  node_handle.getParam("/first_controller/eps_low",eps_low);
+  node_handle.getParam("/first_controller/eps_high",eps_high);
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
@@ -423,9 +424,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       P_opt(i,j) = tauc_gravity_mat(i,j) * qdot_mat(i,j); // THIS IS INCORRECT NEEDS STATES 
     }
   }
-  ROS_INFO("optimal power at t = 5: \n%f \n%f \n%f \n%f \n%f \n%f \n%f",
-  P_opt(0,5000),P_opt(1,5000),P_opt(2,5000),P_opt(3,5000),
-  P_opt(4,5000),P_opt(5,5000),P_opt(6,5000));
 
   //if using previous trajectory data overwrite the P_opt
   if(use_prev_power_data){
@@ -437,16 +435,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
       }
     }
   }
-  ROS_INFO("Previous measured power at t = 5:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
-  P_opt(0,5000),P_opt(1,5000),P_opt(2,5000),P_opt(3,5000),
-  P_opt(4,5000),P_opt(5,5000),P_opt(6,5000));
-  ROS_INFO("Previous measured dq at t = 0:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
-  prev_dq_mat(0,000),prev_dq_mat(1,000),prev_dq_mat(2,000),prev_dq_mat(3,000),
-  prev_dq_mat(4,000),prev_dq_mat(5,000),prev_dq_mat(6,000));
-  ROS_INFO("Previous measured torque at t = 5:\n %f \n%f \n%f \n%f \n%f \n%f \n%f",
-  prev_torque_mat(0,5000),prev_torque_mat(1,5000),prev_torque_mat(2,5000),prev_torque_mat(3,5000),
-  prev_torque_mat(4,5000),prev_torque_mat(5,5000),prev_torque_mat(6,5000));
-
 
   //energy tanks initialization
   Etank_init = Ts * P_opt.rowwise().sum();
@@ -711,7 +699,7 @@ void FirstController::update(const ros::Time& /*time*/,
     for (size_t i=0;i<Njoints;i++){
       P_meas(i) = tau_measured(i) * dq(i); // calculate measured mechanical power
       //check if a tank is empty
-      if(Etank(i) <= eps && !fail){
+      if((Etank(i) <= eps_low || Etank(i) >= eps_high) && !fail){
         fail = true;
         ROS_WARN_THROTTLE(0.1,"Energy tank of joint %d is empty! Etank: %f",
         (i+1), Etank(i));
@@ -781,7 +769,7 @@ void FirstController::update(const ros::Time& /*time*/,
       dddt[i] = u*dq[i];
       tau_cmd[i] = -u*d[i] - gravity[i];
       d[i] = d_prev[i] + dddt[i]*Ts;
-      if(use_dynamic_injection && gripper_flag == 0 && accuracy_flag == 1){
+      if(use_dynamic_injection && accuracy_flag == 1){
         d[i] = d[i] + P_opt(i,update_calls+1)*Ts/d[i];
       }
       Etank[i] = 0.5*d[i]*d[i];

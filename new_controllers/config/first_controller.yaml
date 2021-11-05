@@ -19,9 +19,10 @@ first_controller:
     kmax: 400 #maximumum allowable translational stiffness in case of modulating stiffness
     b_modulation_factor: 0.001
     bmax: 20
-    eps: 0.1 #Energy minimum in tanks [J]
+    eps_low: 0.1 #Energy minimum in tanks [J]
+    eps_high: 1.1 #Energy maximum in the tanks [J] 
     epsP: 50.1 #Power margin for collision detection [W]
-    epsE: 2.5 #Energy margin in the tanks, this value is a % of the total expected energy spend
+    epsE: 0.6 #Energy margin in the tanks, this value is a % of the total expected energy spend
     Ek_drained: 0.001 #maximum kinetic energy of the robot when it is assumed to be drained
     use_TB: true  #wether or not we want to include feed-forward 
     use_modulated_TF: true #bool for using an increasing TF stiffness
@@ -34,12 +35,12 @@ first_controller:
     qdot_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V9_var_env_qdot.txt'
     tauc_gravity_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V9_var_env_tauc_gravity.txt'
     q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/OptimisationData/V9_var_env_q.txt'
-    prev_torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_1_tau_measured.txt'
+    prev_torque_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_1_tau_desired.txt'
     prev_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_1_dq.txt'
     prev_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_1_q.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
-    dataPrint: true
+    dataPrint: false
     dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_2_tau_TB.txt'
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_2_tau_TF.txt'
     dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_2_dq.txt'
