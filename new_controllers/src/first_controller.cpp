@@ -336,7 +336,12 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     //determine length of previous trajectory data
     prev_traj_length = prev_q_index.size()/Njoints;
 
+     std::cout << prev_q_index[0] <<prev_q_index[1] << prev_q_index[2]
+     << prev_q_index[3] << prev_q_index[4] << prev_q_index[5] << prev_q_index[6] << std::endl;
+
+
     for(size_t i=0;i<prev_traj_length;i=i+Njoints){
+     
       if (
          (std::abs(prev_q_index[i]) <= std::abs(qi[i+0]+0.001) &&
            std::abs(prev_q_index[i+1]) <= std::abs(qi[i+1]+0.001) &&
