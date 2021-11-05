@@ -336,33 +336,35 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
     //determine length of previous trajectory data
     prev_traj_length = prev_q_index.size()/Njoints;
 
-     std::cout << prev_q_index[0] <<prev_q_index[1] << prev_q_index[2]
-     << prev_q_index[3] << prev_q_index[4] << prev_q_index[5] << prev_q_index[6] << std::endl;
-
-
-    for(size_t i=0;i<prev_traj_length;i=i+Njoints){
+    for(size_t i=0;i<prev_traj_length*Njoints;i=i+Njoints){
      
       if (
-         (std::abs(prev_q_index[i]) <= std::abs(qi[i+0]+0.001) &&
-           std::abs(prev_q_index[i+1]) <= std::abs(qi[i+1]+0.001) &&
-           std::abs(prev_q_index[i+2]) <= std::abs(qi[i+2]+0.001) &&
-           std::abs(prev_q_index[i+3]) <= std::abs(qi[i+3]+0.001) &&
-           std::abs(prev_q_index[i+4]) <= std::abs(qi[i+4]+0.001) &&
-           std::abs(prev_q_index[i+5]) <= std::abs(qi[i+5]+0.001) &&
-           std::abs(prev_q_index[i+6]) <= std::abs(qi[i+6]+0.001) 
-         ) && 
-         (std::abs(prev_q_index[i]) >= std::abs(qi[i+0]-0.001) &&
-           std::abs(prev_q_index[i+1]) >= std::abs(qi[i+1]-0.001) &&
-           std::abs(prev_q_index[i+2]) >= std::abs(qi[i+2]-0.001) &&
-           std::abs(prev_q_index[i+3]) >= std::abs(qi[i+3]-0.001) &&
-           std::abs(prev_q_index[i+4]) >= std::abs(qi[i+4]-0.001) &&
-           std::abs(prev_q_index[i+5]) >= std::abs(qi[i+5]-0.001) &&
-           std::abs(prev_q_index[i+6]) >= std::abs(qi[i+6]-0.001) 
+         (std::abs(prev_q_index[i]) <= std::abs(qi[0])+0.001 &&
+          std::abs(prev_q_index[i+1]) <= std::abs(qi[1])+0.001 &&
+          std::abs(prev_q_index[i+2]) <= std::abs(qi[2])+0.001 &&
+          std::abs(prev_q_index[i+3]) <= std::abs(qi[3])+0.001  &&
+          std::abs(prev_q_index[i+4]) <= std::abs(qi[4])+0.001 &&
+          std::abs(prev_q_index[i+5]) <= std::abs(qi[5])+0.001 &&
+          std::abs(prev_q_index[i+6]) <= std::abs(qi[6])+0.001 
+          ) && 
+         (std::abs(prev_q_index[i]) >= std::abs(qi[0])-0.001 &&
+          std::abs(prev_q_index[i+1]) >= std::abs(qi[1])-0.001 &&
+          std::abs(prev_q_index[i+2]) >= std::abs(qi[2])-0.001 &&
+          std::abs(prev_q_index[i+3]) >= std::abs(qi[3])-0.001 &&
+          std::abs(prev_q_index[i+4]) >= std::abs(qi[4])-0.001 &&
+          std::abs(prev_q_index[i+5]) >= std::abs(qi[5])-0.001 &&
+          std::abs(prev_q_index[i+6]) >= std::abs(qi[6])-0.001 
          )
         ){
-          l = (i-1)/Njoints;
-          ROS_INFO("found previous starting trajectory time at: %f",l);
+          l = i/Njoints;
+          ROS_INFO("found previous starting trajectory time at: %d",l);
+          break;
         }
+        else if(i == prev_traj_length*Njoints){
+          ROS_ERROR("Could not find previous starting trajectory!");
+          exit(1);
+        }
+        
     }
         
     // inFile.open(prev_torque_path);

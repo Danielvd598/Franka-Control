@@ -83,7 +83,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   int control_state; 
   int k_modulation_counter, b_modulation_counter; // counts how long the stiffness is modulated
   size_t Njoints, optimisation_length, prev_traj_length;
-  double l; //time at which the previous trajectory started 
+  int l; //time at which the previous trajectory started 
   bool use_TB, dataPrint, use_modulated_TF, use_dynamic_injection, use_prev_power_data;
   bool fail, drained;
   std::string torque_path, Hv0_path, qi_path, t_flag_path, qdot_path, tauc_gravity_path,
