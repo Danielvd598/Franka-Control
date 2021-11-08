@@ -689,7 +689,6 @@ void FirstController::update(const ros::Time& /*time*/,
     ROS_INFO_THROTTLE(0.1,"compressed the spring! Trajectory completed!");
     control_state = 4; //
   } 
-  ROS_INFO_THROTTLE(0.1,"z: %f",Hn0(2,3));
 
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
