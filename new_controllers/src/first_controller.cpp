@@ -764,7 +764,9 @@ void FirstController::update(const ros::Time& /*time*/,
   }
   if(control_state==4 || gripper_flag != 0){ //if gripper is moving don't send torque commands
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
-    ROS_WARN_THROTTLE(0.1,"System is in compliant mode");
+    if(gripper_flag == 0){
+      ROS_WARN_THROTTLE(0.1,"System is in compliant mode");
+    }
   }
 
   //Energy tanks
@@ -776,10 +778,10 @@ void FirstController::update(const ros::Time& /*time*/,
       u2 = -(tau_measured[i]/d[i]);
       dddt[i] = u2*dq[i];
       tau_cmd[i] = -u*d[i];
-      d[i] = d_prev[i] + dddt[i]*Ts;
       if(use_dynamic_injection && accuracy_flag == 1){
-        d[i] = d[i] + P_opt(i,update_calls+1)*Ts/d[i];
+        d[i] = d_prev[i] + P_opt(i,update_calls)*Ts/d[i];
       }
+      d[i] = d[i] + dddt[i]*Ts;
       Etank[i] = 0.5*d[i]*d[i];
     }
   }

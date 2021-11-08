@@ -41,7 +41,7 @@ first_controller:
     prev_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_7_q.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
-    dataPrint: true
+    dataPrint: false
     dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_TB.txt'
     dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_TF.txt'
     dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_dq.txt'
