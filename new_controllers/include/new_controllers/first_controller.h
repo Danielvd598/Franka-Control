@@ -92,6 +92,7 @@ class FirstController : public controller_interface::MultiInterfaceController<
   dataAnalysis_q_path, dataAnalysis_tau_measured_path, dataAnalysis_tau_desired_path,
   dataAnalysis_xyz_ref_path, dataAnalysis_accuracy_thr_path;
   double Ts; //sample time
+  double z_compression; //height of the desired compressed spring
   double k, b; //impedance control paramaters
   double bdrain; //drainage damping
   double epsP, epsE, eps_low, eps_high; //Power and Energy margins for collision detection/energy tanks

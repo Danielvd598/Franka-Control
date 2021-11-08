@@ -87,6 +87,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/epsE",epsE);
   node_handle.getParam("/first_controller/epsP",epsP);
   node_handle.getParam("/first_controller/Ek_drained",Ek_drained);
+  node_handle.getParam("/first_controller/z_compression",z_compression);
   node_handle.getParam("/first_controller/torque_path", torque_path);
   node_handle.getParam("/first_controller/Hv0_path", Hv0_path);
   node_handle.getParam("/first_controller/qi_path", qi_path);
@@ -675,7 +676,7 @@ void FirstController::update(const ros::Time& /*time*/,
     accuracy_flag = 0;
     fail = true;
   }
-
+  // this is when not using compressing the spring
   if (update_calls ==  static_cast<int>(t_flag[6]*1000) && 
   std::abs(Hnv(0,3)) < accuracy_thr && std::abs(Hnv(1,3)) < accuracy_thr 
   && std::abs(Hnv(2,3)) < accuracy_thr && gripper_status.size() < 1500){
@@ -683,7 +684,12 @@ void FirstController::update(const ros::Time& /*time*/,
     ROS_INFO_THROTTLE(0.1,"releasing!");
     gripper_status.conservativeResize(gripper_calls+1,1);
     gripper_status.row(gripper_calls) << 3;
+  } else if(update_calls >  static_cast<int>(t_flag[5]*1000)
+  && std::abs(Hn0(2,3)) < z_compression && gripper_status.size() < 1500){//this is when cocmpressing the spring
+    ROS_INFO_THROTTLE(0.1,"compressed the spring! Trajectory completed!");
+    control_state = 4; //
   } 
+  ROS_INFO_THROTTLE(0.1,"z: %f",Hn0(2,3));
 
   std_msgs::Int16 gripper_flag_msg;
   gripper_flag_msg.data = gripper_flag;
@@ -759,14 +765,17 @@ void FirstController::update(const ros::Time& /*time*/,
   }
   if(control_state==4 || gripper_flag != 0){ //if gripper is moving don't send torque commands
     tau_cmd << 0,0,0,0,0,0,0; //gravity is compensated internally in the Franka
+    ROS_WARN_THROTTLE(0.1,"System is in compliant mode");
   }
 
   //Energy tanks
   for(size_t i=0; i<Njoints; i++){
     if(control_state == 2){
       double u; //control variable
+      double u2; //we want to look at what we have been measuring
       u = -(tau_cmd[i])/d[i];
-      dddt[i] = u*dq[i];
+      u2 = -(tau_measured[i]/d[i]);
+      dddt[i] = u2*dq[i];
       tau_cmd[i] = -u*d[i];
       d[i] = d_prev[i] + dddt[i]*Ts;
       if(use_dynamic_injection && accuracy_flag == 1){
