@@ -41,12 +41,12 @@ first_controller:
     prev_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_7_q.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
-    dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_tau_desired.txt'
-    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_xyz_ref.txt'
-    dataAnalysis_accuracy_thr_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_8_accuracy_thr.txt'
+    dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_tau_desired.txt'
+    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_xyz_ref.txt'
+    dataAnalysis_accuracy_thr_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V9_var_env_9_accuracy_thr.txt'
