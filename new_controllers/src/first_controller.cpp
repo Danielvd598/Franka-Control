@@ -706,7 +706,7 @@ void FirstController::update(const ros::Time& /*time*/,
       //check if a tank is empty
       if((Etank(i) <= eps_low || Etank(i) >= eps_high) && !fail){
         fail = true;
-        ROS_WARN_THROTTLE(0.1,"Energy tank of joint %d is empty! Etank: %f",
+        ROS_WARN_THROTTLE(0.1,"Energy tank of joint %d has exceeded its limits! Etank: %f",
         (i+1), Etank(i));
         t1 = ros::WallTime::now();
       }
