@@ -95,7 +95,8 @@ class FirstController : public controller_interface::MultiInterfaceController<
   double z_compression; //height of the desired compressed spring
   double k, b; //impedance control paramaters
   double bdrain; //drainage damping
-  double epsP, epsE, eps_low, eps_high; //Power and Energy margins for collision detection/energy tanks
+  std::vector<double> eps_low, eps_high;
+  double epsP, epsE; //Power and Energy margins for collision detection/energy tanks
   double Ek_drained; //maximum kinetic energy of the robot when it is assumed to be drained
   double Ek; //current total kinetic energy of the robot
   double kp, kd; //PD join space control parameters

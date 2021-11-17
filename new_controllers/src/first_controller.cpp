@@ -110,7 +110,6 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
   node_handle.getParam("/first_controller/dataAnalysis_xyz_ref_path", dataAnalysis_xyz_ref_path);
   node_handle.getParam("/first_controller/dataAnalysis_accuracy_thr_path", dataAnalysis_accuracy_thr_path);
 
-
   control_state = 0;
   Njoints = 7;
   I33 << 1, 0, 0,
@@ -704,7 +703,7 @@ void FirstController::update(const ros::Time& /*time*/,
     for (size_t i=0;i<Njoints;i++){
       P_meas(i) = tau_measured(i) * dq(i); // calculate measured mechanical power
       //check if a tank is empty
-      if((Etank(i) <= eps_low || Etank(i) >= eps_high) && !fail){
+      if((Etank(i) <= eps_low[i] || Etank(i) >= eps_high[i]) && !fail){
         fail = true;
         ROS_WARN_THROTTLE(0.1,"Energy tank of joint %d has exceeded its limits! Etank: %f",
         (i+1), Etank(i));
