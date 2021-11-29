@@ -638,7 +638,13 @@ void FirstController::update(const ros::Time& /*time*/,
 
     ROS_INFO_THROTTLE(0.1,"The stiffness!\n k: %f",K(1,1));
   }
-  tau_TF = K*(q_ref-q) - (B * (dq - dq_ref));
+  //task-free reacts to optimisation trajectory so only do it when trajectory data
+  //is available
+  if (update_calls<optimisation_length){
+    tau_TF = K*(q_ref-q) - (B * (dq - dq_ref));
+  }else {
+    tau_TF << 0,0,0,0,0,0,0;
+  }
 
   //final control torque
   tau_d =  tau_TF + tau_TB;
