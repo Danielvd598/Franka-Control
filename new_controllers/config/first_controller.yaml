@@ -24,7 +24,7 @@ first_controller:
     epsP: 50.1 #Power margin for collision detection [W]
     epsE: 0.65 #Energy margin in the tanks or this value is a % of the total expected energy spend
     Ek_drained: 0.001 #maximum kinetic energy of the robot when it is assumed to be drained
-    z_compression: 0.1536 
+    z_compression: 0.1495 #0.1495
     use_TB: true  #wether or not we want to include feed-forward 
     use_modulated_TF: true #bool for using an increasing TF stiffness
     use_dynamic_injection: true #bool for dynamically injection energy in the energy tanks
@@ -41,12 +41,12 @@ first_controller:
     prev_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_1_q.txt'
     kp: 1 #This value is modified, so not actually a "kp"
     kd: 5
-    dataPrint: false
-    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_tau_TB.txt'
-    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_tau_TF.txt'
-    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_dq.txt'
-    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_q.txt'
-    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_tau_measured.txt'
-    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_tau_desired.txt'
-    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_xyz_ref.txt'
-    dataAnalysis_accuracy_thr_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_22_accuracy_thr.txt'
+    dataPrint: true
+    dataAnalysis_tau_TB_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_tau_TB.txt'
+    dataAnalysis_tau_TF_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_tau_TF.txt'
+    dataAnalysis_dq_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_dq.txt'
+    dataAnalysis_q_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_q.txt'
+    dataAnalysis_tau_measured_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_tau_measured.txt'
+    dataAnalysis_tau_desired_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_tau_desired.txt'
+    dataAnalysis_xyz_ref_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_xyz_ref.txt'
+    dataAnalysis_accuracy_thr_path: '/home/dijkd/franka_ws/src/franka_ros/new_controllers/outputData/V11_var_env_23_accuracy_thr.txt'
