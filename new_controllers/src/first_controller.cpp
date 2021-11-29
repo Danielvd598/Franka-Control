@@ -442,7 +442,7 @@ bool FirstController::init(hardware_interface::RobotHW* robot_hw,
            Etank_init(0),Etank_init(1),Etank_init(2),Etank_init(3),Etank_init(4),Etank_init(5),Etank_init(6));
   for(size_t i=0; i<Njoints; i++){
     if(!use_dynamic_injection){
-      d_prev[i] = std::sqrt(2*(Etank_init[i]+epsE));
+      d_prev[i] = std::sqrt(2*std::abs((Etank_init[i])+epsE));
     } else d_prev[i] = std::sqrt(2*epsE);
     d[i] = d_prev[i];
     Etank[i]  = 0.5*d[i]*d[i];
